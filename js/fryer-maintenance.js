@@ -1,4 +1,4 @@
-import { getFirestore, doc, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFirestore, doc, collection, query, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { firebaseApp } from './store.js?v=20261029.soho1';
 import { currentUser, isAdmin } from './auth.js?v=20261019.8';
 import { getFryerPreference, setFryerPreference, notifyFryer } from './push.js?v=20261111.fryer2';
@@ -7,7 +7,7 @@ const db = getFirestore(firebaseApp);
 const $ = id => document.getElementById(id);
 const monthNames=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 const weekday=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
-let access=false, month='', stop=null, ticket=0, entries={}, loaded=false, selectedDay=null, saving=false;
+let access=false, month='', stop=null, stopHistory=null, ticket=0, entries={}, loaded=false, selectedDay=null, saving=false;
 const monthKey=()=>window.romasyayCurrentMonth?.()||'';
 const cleanEntry=value=>({cleaned:value?.cleaned===true,oilChanged:value?.oilChanged===true,note:typeof value?.note==='string'?value.note.slice(0,250):''});
 let preferenceTicket=0,preferenceBusy=false;
@@ -64,7 +64,56 @@ async function sendFryerNotice(month,day,kind){
 }
 function showStatus(message,error=false){const el=$('fryer-status');el.textContent=message;el.classList.toggle('error',error)}
 function disableDialog(){selectedDay=null;$('fryer-editor').hidden=true}
-function unsubscribe(){ticket++;stop?.();stop=null;entries={};loaded=false;disableDialog()}
+function historyText(previous,next){
+ const changes=[];
+ if(previous.oilChanged!==next.oilChanged)changes.push(next.oilChanged?'🛢️ Позначено заміну олії':'🛢️ Скасовано позначку заміни олії');
+ if(previous.cleaned!==next.cleaned)changes.push(next.cleaned?'🧽 Позначено прибирання':'🧽 Скасовано позначку прибирання');
+ if(previous.note!==next.note)changes.push(next.note?'📝 Примітку змінено':'📝 Примітку вилучено');
+ return changes;
+}
+function renderHistory(records){
+ const list=$('fryer-history-list');list.replaceChildren();
+ const status=$('fryer-history-status');
+ if(!records.length){status.textContent='Історія поки порожня. Записи, створені до ввімкнення журналу, не мають ретроспективної історії.';return}
+ status.textContent='Записів у списку: '+records.length+'. Нові зміни відображаються автоматично.';
+ for(const record of records){
+  const data=record.data();
+  const before=cleanEntry(data.before),after=cleanEntry(data.after);
+  const changes=historyText(before,after);
+  const item=document.createElement('li');item.className='fryer-history-item';
+  const top=document.createElement('div');top.className='fryer-history-top';
+  const day=document.createElement('strong');
+  day.textContent=String(data.dayKey||'?')+'.'+month.slice(5)+'.'+month.slice(0,4);
+  const date=document.createElement('time');
+  const created=data.createdAt?.toDate?.();
+  date.textContent=created?created.toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'Час уточнюється';
+  if(created)date.dateTime=created.toISOString();
+  top.append(day,date);
+  const by=document.createElement('p');by.className='fryer-history-author';
+  const name=typeof data.actorName==='string'&&data.actorName.trim()?data.actorName.trim():'Користувач';
+  const uid=typeof data.actorUid==='string'?data.actorUid.slice(0,7):'невідомий';
+  by.textContent='Запис вніс акаунт: '+name+' · UID '+uid+'…';
+  const body=document.createElement('ul');body.className='fryer-history-changes';
+  for(const line of changes){const change=document.createElement('li');change.textContent=line;body.append(change)}
+  if(before.note!==after.note&&after.note){const note=document.createElement('li');note.textContent='Нова примітка: '+after.note;body.append(note)}
+  if(before.note!==after.note&&before.note){const note=document.createElement('li');note.textContent='Попередня примітка: '+before.note;body.append(note)}
+  item.append(top,by,body);list.append(item);
+ }
+}
+function watchHistory(key,attempt){
+ const records=query(collection(db,'fryerMaintenance',key,'history'),orderBy('createdAt','desc'),limit(100));
+ $('fryer-history-status').textContent='Завантажуємо журнал…';
+ $('fryer-history-list').replaceChildren();
+ stopHistory=onSnapshot(records,snap=>{
+   if(ticket!==attempt)return;
+   renderHistory(snap.docs);
+ },error=>{
+   if(ticket!==attempt)return;
+   $('fryer-history-status').textContent='Не вдалося отримати журнал: '+(error.code||'помилка')+'. Перевірте правила Firestore.';
+ });
+}
+
+function unsubscribe(){ticket++;stop?.();stop=null;stopHistory?.();stopHistory=null;entries={};loaded=false;disableDialog();$('fryer-history-list').replaceChildren();}
 function watch(){
   const next=monthKey();
   if(!access||!next||!/^20\d{2}-(0[1-9]|1[0-2])$/.test(next)){unsubscribe();return}
@@ -72,6 +121,7 @@ function watch(){
   unsubscribe();month=next;
   showStatus('Завантажуємо окремий графік фритюра…');render();
   const attempt=++ticket;
+  watchHistory(month,attempt);
   stop=onSnapshot(doc(db,'fryerMaintenance',month),snap=>{
     if(attempt!==ticket)return;
     const raw=snap.exists()?snap.data()?.days:{};
@@ -130,19 +180,34 @@ async function save(event){
  const day=selectedDay,key=month,cleaned=$('fryer-cleaned').checked,oilChanged=$('fryer-oil').checked,note=$('fryer-note').value.trim();
  if(note.length>250){$('fryer-editor-message').textContent='Примітка: максимум 250 символів.';return}
  const ref=doc(db,'fryerMaintenance',key);
+ const auditRef=doc(collection(db,'fryerMaintenance',key,'history'));
+ const actor=currentUser();
+ const actorUid=actor?.uid;
+ const actorName=(typeof actor?.displayName==='string'&&actor.displayName.trim()?actor.displayName.trim():'Користувач').slice(0,80);
+ const after={cleaned,oilChanged,note};
  saving=true;$('fryer-save').disabled=true;$('fryer-editor-message').textContent='Зберігаємо…';
  try{
-  const previous=await runTransaction(db,async tx=>{
+  const result=await runTransaction(db,async tx=>{
    const snap=await tx.get(ref),data=snap.exists()?snap.data():{};
    const days={...(data.days&&typeof data.days==='object'?data.days:{})};
    const before=cleanEntry(days[String(day)]);
-   if(cleaned||oilChanged||note)days[String(day)]={cleaned,oilChanged,note};
+   if(before.cleaned===after.cleaned&&before.oilChanged===after.oilChanged&&before.note===after.note)return {before,changed:false};
+   if(after.cleaned||after.oilChanged||after.note)days[String(day)]=after;
    else delete days[String(day)];
-   tx.set(ref,{days,updatedAt:serverTimestamp()});
-   return before;
+   tx.set(ref,{days,updatedAt:serverTimestamp(),lastAuditId:auditRef.id});
+   tx.set(auditRef,{
+     dayKey:String(day),actorUid,actorName,createdAt:serverTimestamp(),
+     before:(before.cleaned||before.oilChanged||before.note)?before:{},
+     after:(after.cleaned||after.oilChanged||after.note)?after:{}
+   });
+   return {before,changed:true};
   });
+  if(!result.changed){
+    $('fryer-editor-message').textContent='Змін немає — нічого не збережено.';
+    return;
+  }
   if(key===month&&selectedDay===day)disableDialog();
-  void sendFryerNotice(key,day,noticeKind(previous,{cleaned,oilChanged,note}));
+  void sendFryerNotice(key,day,noticeKind(result.before,after));
  }catch(error){$('fryer-editor-message').textContent='Не вдалося зберегти: '+(error?.code||error.message)}
  finally{saving=false;$('fryer-save').disabled=false}
 }
