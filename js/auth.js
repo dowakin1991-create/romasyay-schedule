@@ -7,14 +7,16 @@ import {
   updateProfile, sendEmailVerification, sendPasswordResetEmail, reload
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { firebaseApp } from "./store.js?v=20261029.soho1";
-import { ADMIN_UID } from "./config.js?v=20261015.2";
+import { OWNER_UIDS, PRIMARY_OWNER_UID, TECH_OWNER_UID } from "./config.js?v=20261015.2";
 
 const auth = getAuth(firebaseApp);
 auth.languageCode = 'uk';
 // Preserve an existing signed-in account across browser/app restarts.
 // Firebase restores the existing session. Persistence is selected on sign-in, not during startup.
 let approvedUid = null;
-export const isOwner = user => !!user && user.uid === ADMIN_UID;
+export const isOwner = user => !!user && !user.isAnonymous && OWNER_UIDS.includes(user.uid);
+export const isPrimaryOwner = user => !!user && !user.isAnonymous && user.uid === PRIMARY_OWNER_UID;
+export const isTechOwner = user => !!user && !user.isAnonymous && user.uid === TECH_OWNER_UID;
 export const isAdmin = user => isOwner(user) || !!(user && user.emailVerified && approvedUid === user.uid);
 export function watchAuth(callback) {
   let stopRole = null, generation = 0, lastIdentity;
