@@ -270,7 +270,7 @@ body[data-page="admin"] #push-panel{display:none!important}
       <form id="fryer-admin-form">
         <div class="fryer-admin-fields">
           <label>Дата заміни <input id="fryer-admin-date" type="date" required></label>
-          <label>Виконавець <input id="fryer-admin-person" type="text" maxlength="80" required placeholder="Ім’я працівника"></label>
+          <label>Виконавець <input id="fryer-admin-person" type="text" maxlength="80" placeholder="Ім’я працівника"></label>
           <label class="fryer-admin-check"><input id="fryer-admin-done" type="checkbox" checked> Олію замінено</label>
           <label class="fryer-admin-note">Примітка <textarea id="fryer-admin-note" maxlength="250" placeholder="Необов’язково"></textarea></label>
         </div>
@@ -278,6 +278,11 @@ body[data-page="admin"] #push-panel{display:none!important}
         <p id="fryer-admin-status" role="status" aria-live="polite"></p>
         <button type="submit">Зберегти запис та історію</button>
       </form>
+      <div class="fryer-admin-log">
+        <h3>Історія заміни олії за вибраний місяць</h3>
+        <p id="fryer-admin-history-status" role="status">Завантажуємо…</p>
+        <ol id="fryer-admin-history-list" class="fryer-history-list"></ol>
+      </div>
       <p class="fryer-help">Кожне редагування додається до незмінного журналу. Приховані старі записи про прибирання не видаляються автоматично.</p>
     </details>
     <div class="table-wrapper">
