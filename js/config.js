@@ -1,12 +1,11 @@
 export const firebaseConfig = Object.freeze({
-  apiKey: "AIzaSyAfSPpB0l2whC6A9q596fFU-VwYTluN1vY",
-  authDomain: "romasyay-cloud.firebaseapp.com",
-  databaseURL: "https://romasyay-cloud-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "romasyay-cloud",
-  storageBucket: "romasyay-cloud.firebasestorage.app",
-  messagingSenderId: "515733482243",
-  appId: "1:515733482243:web:26e286e071fd3621859736"
+  apiKey: "AIzaSyDXAnvWxF76w8Zj5WXQ_Rb_quMGqe-ivCo",
+  authDomain: "romasyay-schedule.firebaseapp.com",
+  projectId: "romasyay-schedule",
+  storageBucket: "romasyay-schedule.firebasestorage.app",
+  messagingSenderId: "489182484383",
+  appId: "1:489182484383:web:037c519c5f01ac033d4faa"
 });
-// Set the Firebase Authentication UID of the new schedule owner before enabling admin functions.
+// Set the verified Firebase Authentication UID of this schedule's owner before launch.
 export const ADMIN_UID = "";
-export const APP = Object.freeze({ name:"РОМАСЯЙ ГРАФІК", locale:"uk-UA", maxReceiptLinks:8 });
+export const APP = Object.freeze({ name: "РОМАСЯЙ ГРАФІК", locale: "uk-UA", maxReceiptLinks: 8 });
