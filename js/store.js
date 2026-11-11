@@ -179,10 +179,26 @@ export async function saveEmployeeProfile(month, id, name, uid) {
 
 export async function bindEmployee(employeeId, uid) {
   uid=uid.trim();
-  if (uid.length>128 || uid.includes('/')) throw new Error('Неправильний код доступу.');
+  employeeId=String(employeeId);
+  if (uid.length>128 || uid.includes('/') || !employeeId || employeeId.includes('/')) throw new Error('Неправильний код доступу.');
   await runTransaction(db,async tx=>{
-    tx.set(doc(db,'employeeAccess',String(employeeId)),{uid});
-    if(uid) tx.set(doc(db,'teamAccess',uid),{employeeId:String(employeeId)});
+    const targetRef=doc(db,'employeeAccess',employeeId);
+    const targetSnap=await tx.get(targetRef);
+    const previousUid=targetSnap.exists()?String(targetSnap.data().uid||''):'';
+    const teamRef=uid?doc(db,'teamAccess',uid):null;
+    const teamSnap=teamRef?await tx.get(teamRef):null;
+    const previousId=teamSnap?.exists()?String(teamSnap.data().employeeId||''):'';
+    const previousRef=previousId&&previousId!==employeeId?doc(db,'employeeAccess',previousId):null;
+    const previousSnap=previousRef?await tx.get(previousRef):null;
+    const displacedTeamRef=previousUid&&previousUid!==uid?doc(db,'teamAccess',previousUid):null;
+    const displacedTeamSnap=displacedTeamRef?await tx.get(displacedTeamRef):null;
+    // All reads precede any writes, as required by Firestore transactions.
+    if(previousRef&&previousSnap?.exists()&&previousSnap.data().uid===uid)
+      tx.set(previousRef,{uid:''});
+    if(displacedTeamRef&&displacedTeamSnap?.exists()&&String(displacedTeamSnap.data().employeeId)===employeeId)
+      tx.delete(displacedTeamRef);
+    tx.set(targetRef,{uid});
+    if(teamRef)tx.set(teamRef,{employeeId});
   });
 }
 
