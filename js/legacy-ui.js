@@ -4,7 +4,7 @@ import { watchTeamAccess, watchViewerAccess } from './access.js?v=20261111.bindi
 import { initOwnerPanel } from './owner.js?v=20261111.binding2';
 import { initAccount, openAccount, setScheduleAccess } from './account.js?v=20261111.binding2';
 import { isOwner, isPrimaryOwner, currentUser, canEditWorker, ensureWorkerSession, isAdmin, login, logout, watchAuth } from './auth.js?v=20261111.rolefix';
-import { ensureMonthRoster, moveEmployee, subscribeSchedule, monthId, updateSchedule, setAvailability, employeeAccess, bindEmployee, bindOwnerEmployee, addReceipt, deleteReceipt, removeBanquet, readReceipt } from './store.js?v=20261111.bindingfix';
+import { ensureMonthRoster, moveEmployee, subscribeSchedule, monthId, updateSchedule, setAvailability, employeeAccess, bindEmployee, bindOwnerEmployee, readReceipt } from './store.js?v=20261111.bindingfix';
 import { dutyName as getDutyName, shiftCount, toast } from './ui.js?v=20261015.2';
 import { withBusy, recordChange, changeJournal, clearChangeJournal } from './session.js?v=20261017.4';
 import { compressReceipt } from './receipts.js?v=20261015.2';
@@ -403,37 +403,6 @@ function renderPhotos(container,month,day,banquet,editable) {
     const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Відкрити чек ↗';link.className='modal-btn';container.append(link);
   }
 }
-window.markBanquetNoPhoto = action(async () => {
-  const month=getDocId(),day=currentSettingsDay;if(!admin || !day)return;
-  await updateSchedule(month,draft=>{draft.banquets[day]={...(draft.banquets[day]||{}),active:true,type:'banquet'};});
-  recordChange(month,'banquets',day,'banquet');daySettingsStage='main';
-});
-window.markCleaning = action(async () => {
-  const month=getDocId(),day=currentSettingsDay;if(!admin||!day)return;
-  await updateSchedule(month,draft=>{draft.banquets[day]={active:true,type:'cleaning',note:'',links:[],receiptIds:[],time:'',guests:null};});
-  daySettingsStage='main';recordChange(month,'banquets',day,'cleaning');toast('Генеральне прибирання додано.');
-});
-window.deleteBanquet = action(async () => {
-  const month=getDocId(),day=currentSettingsDay;
-  if (!admin || !day || !confirm(`Скасувати ${banquets[day]?.type==='cleaning'?'генеральне прибирання':'бенкет'} повністю?`)) return;
-  const oldType=banquets[day]?.type==='cleaning'?'cleaning':'banquet';await removeBanquet(month,day);recordChange(month,'banquets',day,oldType);
-});
-window.handleBanquetUpload = action(async event => {
-  const files=[...event.target.files],month=getDocId(),day=currentSettingsDay;
-  if (!admin || !day || !files.length)return;
-  if (files.length+(banquets[day]?.receiptIds?.length||0)>8) throw new Error('До одного бенкету можна додати не більше 8 фото.');
-  let saved=0;
-  try {
-    // Compress before creating a banquet: an invalid first file must not create an empty event.
-    for (const file of files) {
-      const image=await compressReceipt(file);
-      if (!saved && (!banquets[day]?.active || banquets[day]?.type==='cleaning')) await updateSchedule(month,draft=>{draft.banquets[day]={...(draft.banquets[day]?.type==='cleaning'?{}:draft.banquets[day]||{}),active:true,type:'banquet'};});
-      await addReceipt(month,day,image);saved++;recordChange(month,'banquets',day);
-    }
-    daySettingsStage='main';toast(`Збережено фото: ${saved}.`);
-  } catch(error) {throw new Error(`Збережено фото: ${saved}. ${error.message || 'Помилка завантаження.'}`);}
-  finally {event.target.value='';}
-});
 const noticeTitles={'schedule-added':'Графік додано',schedule:'Графік змінено'};
 function noticeText(n) {
  const date=n.kind==='schedule-added'?`${monthNames[currentDate.getMonth()].toLowerCase()} ${String(n.day).padStart(2,'0')}-${String(n.endDay).padStart(2,'0')}`:`${String(n.day).padStart(2,'0')}.${String(currentDate.getMonth()+1).padStart(2,'0')}`;
