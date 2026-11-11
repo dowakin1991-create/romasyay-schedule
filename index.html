@@ -266,6 +266,11 @@
       <article class="fryer-card">
         <h2 id="fryer-heading">🧽 Графік прибирання фритюра</h2>
         <p>Окремий календар прибирання та заміни олії — не впливає на робочі зміни.</p>
+        <div class="fryer-push-pref">
+          <label for="fryer-push-toggle"><input id="fryer-push-toggle" type="checkbox" disabled> 🔔 Отримувати сповіщення про фритюр</label>
+          <p id="fryer-push-pref-status" role="status" aria-live="polite">Перевіряємо налаштування підписки…</p>
+          <p class="fryer-help">Особиста підписка для цього акаунта. Щоб повідомлення приходили, також увімкни загальні сповіщення через дзвіночок.</p>
+        </div>
         <strong id="fryer-month"></strong>
         <div class="fryer-stats">
           <span class="fryer-stat">🧽 Прибирань: <strong id="fryer-cleaned-total">0</strong></span>
@@ -350,6 +355,6 @@
 
 <script type="module" src="js/legacy-ui.js?v=20261111.push2"></script>
 <script type="module" src="js/theme-switch.js?v=20261111.1"></script>
-<script type="module" src="js/fryer-maintenance.js?v=20261111.1"></script>
+<script type="module" src="js/fryer-maintenance.js?v=20261111.notify1"></script>
 </body>
 </html>
