@@ -5,11 +5,11 @@ const db=getFirestore(firebaseApp),$=id=>document.getElementById(id);
 const monthNames=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Грудень'];
 const entry=e=>({oilChanged:e?.oilChanged===true,note:e?.note||'',performedBy:e?.performedBy||e?.oilPerformedBy||''});
 const kyiv=()=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const a=k=>p.find(x=>x.type===k)?.value;return a('year')+'-'+a('month')+'-'+a('day')};
-let month='',access=false,records={},loaded=false,eligible=false,employeeName='',activeUid='',off=null,offHistory=null,version=0,busy=false;
+let month='',access=false,records={},loaded=false,eligible=false,employeeName='',activeUid='',off=null,offHistory=null,version=0,watchRevision=0,busy=false;
 const panel=$('fryer-view'),editor=$('fryer-editor');
 function closeEditor(){editor.hidden=true}
 function close(){closeEditor();panel.hidden=true;document.body.classList.remove('fryer-journal-open')}
-function clear(){version++;off?.();offHistory?.();off=offHistory=null;loaded=false;records={};eligible=false;close()}
+function clear(){version++;watchRevision++;off?.();offHistory?.();off=offHistory=null;loaded=false;records={};eligible=false;close()}
 function render(){
  if(!month)return;
  const [y,m]=month.split('-').map(Number);
@@ -73,14 +73,14 @@ function watch(){
  const target=window.romasyayCurrentMonth?.();
  if(!access||!/^20\d\d-(0[1-9]|1[0-2])$/.test(target||''))return;
  if(off&&month===target)return;
- clear();month=target;const ticket=++version;
+ const alreadyOpen=!panel.hidden;clear();if(alreadyOpen){panel.hidden=false;document.body.classList.add('fryer-journal-open')}month=target;const ticket=++watchRevision;
  $('fryer-status').textContent='Завантажуємо журнал…';
  off=onSnapshot(doc(db,'fryerMaintenance',month),snap=>{
-  if(ticket>version)return;records=snap.data()?.days||{};loaded=true;
+  if(ticket!==watchRevision)return;records=snap.data()?.days||{};loaded=true;
   $('fryer-status').textContent='Дані актуальні';render();void checkShift();
  },e=>{$('fryer-status').textContent='Помилка: '+(e.code||e.message)});
  offHistory=onSnapshot(query(collection(db,'fryerMaintenance',month,'history'),orderBy('createdAt','desc'),limit(100)),
-  snap=>renderHistory(snap.docs),e=>{$('fryer-history-status').textContent='Журнал недоступний: '+(e.code||e.message)});
+  snap=>{if(ticket===watchRevision)renderHistory(snap.docs)},e=>{$('fryer-history-status').textContent='Журнал недоступний: '+(e.code||e.message)});
 }
 function open(){if(!access)return;panel.hidden=false;document.body.classList.add('fryer-journal-open');watch();void checkShift()}
 function start(){
