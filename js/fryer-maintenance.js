@@ -1,7 +1,7 @@
 import { getFirestore, doc, collection, query, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { firebaseApp } from './store.js?v=20261111.bindingfix';
 import { currentUser, isAdmin } from './auth.js?v=20261111.rolefix';
-import { getFryerPreference, setFryerPreference, notifyFryer } from './push.js?v=20261111.fryer2';
+import { getFryerPreference, setFryerPreference, notifyFryer } from './push.js?v=20261111.binding2';
 
 const db = getFirestore(firebaseApp);
 const $ = id => document.getElementById(id);
