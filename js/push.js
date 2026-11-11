@@ -156,6 +156,31 @@ export async function notifySchedule(month, notices) {
     return summary;
   } catch (error) { throw Error(errorText(error)); }
 }
+// Separate voluntary fryer notifications, stored per Firebase account on the Worker.
+export async function getFryerPreference() {
+  return (await call('fryerPreference')).enabled === true;
+}
+export async function setFryerPreference(enabled) {
+  return (await call('fryerPreference', {enabled:!!enabled})).enabled === true;
+}
+export async function notifyFryer(month, notice) {
+  const job=await call('pushFryer',{month,notice});
+  const totals={accepted:0,failed:0,removed:0};
+  let index=0;
+  await Promise.all(Array.from({length:Math.min(3,job.total||0)},async()=>{
+    while(index<job.total){
+      const i=index++;
+      try{
+        const answer=await call('pushDeliver',{jobId:job.jobId,index:i});
+        totals.accepted+=answer.accepted||0;
+        totals.failed+=(answer.failed||0)+(answer.skipped||0);
+        totals.removed+=answer.removed||0;
+      }catch{totals.failed++}
+    }
+  }));
+  return {...totals,total:job.total||0};
+}
+
 export function initPush() {
   $('push-enable').addEventListener('click', enable);
   $('push-disable').addEventListener('click', async () => {
