@@ -168,7 +168,7 @@
 <meta name="theme-color" content="#173e3a">
 <script>try{const t=localStorage.getItem('romasyay.schedule.theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch{document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
 <link rel="stylesheet" href="assets/romasyay-themes.css?v=20261111.1">
-<link rel="stylesheet" href="assets/fryer-maintenance.css?v=20261111.audit2">
+<link rel="stylesheet" href="assets/fryer-maintenance.css?v=20261111.simple1">
 </head>
 <body data-page="index">
 <div class="container">
@@ -263,63 +263,38 @@
     </div>
     </section>
     <section id="fryer-view" class="fryer-view" hidden aria-labelledby="fryer-heading">
-      <article class="fryer-card">
-        <h2 id="fryer-heading">🧽 Графік прибирання фритюра</h2>
-        <p>Окремий календар прибирання та заміни олії — не впливає на робочі зміни.</p>
-        <div class="fryer-push-pref">
-          <label for="fryer-push-toggle"><input id="fryer-push-toggle" type="checkbox" disabled> 🔔 Отримувати сповіщення про фритюр</label>
-          <p id="fryer-push-pref-status" role="status" aria-live="polite">Перевіряємо налаштування підписки…</p>
-          <p class="fryer-help">Особиста підписка для цього акаунта. Щоб повідомлення приходили, також увімкни загальні сповіщення через дзвіночок.</p>
-        </div>
-        <strong id="fryer-month"></strong>
-        <div class="fryer-stats">
-          <span class="fryer-stat">🧽 Прибирань: <strong id="fryer-cleaned-total">0</strong></span>
-          <span class="fryer-stat">🛢️ Замін олії: <strong id="fryer-oil-total">0</strong></span>
-        </div>
-        <p id="fryer-status" role="status">Завантажуємо…</p>
-        <p id="fryer-push-feedback" role="status" aria-live="polite"></p>
-        <div id="fryer-calendar" class="fryer-calendar" aria-label="Календар фритюра"></div>
-        <p class="fryer-help">Натисни дату для деталей. Власник або шеф може позначати прибирання, заміну олії та додавати примітки. Інші користувачі переглядають записи.</p>
-      </article>
-      <article class="fryer-card fryer-history-card">
-        <div class="fryer-history-heading">
-          <div>
-            <h2>Історія обслуговування</h2>
-            <p>Хто вніс або виправив запис, що саме змінилося та коли це збережено.</p>
-          </div>
-          <span class="fryer-history-limit">Останні 100 дій за місяць</span>
-        </div>
-        <p id="fryer-history-status" role="status" aria-live="polite">Завантажуємо журнал…</p>
-        <ol id="fryer-history-list" class="fryer-history-list" aria-label="Історія змін фритюра"></ol>
-      </article>
-    </section>
-    <section id="fryer-editor" class="fryer-editor" hidden>
-      <form id="fryer-form" class="fryer-dialog" role="dialog" aria-modal="true" aria-labelledby="fryer-editor-title">
-        <h3 id="fryer-editor-title"></h3>
-        <fieldset id="fryer-editor-fields">
-          <label><input id="fryer-cleaned" type="checkbox"> 🧽 Фритюр прибрано</label>
-          <label><input id="fryer-oil" type="checkbox"> 🛢️ Олію замінено</label>
-          <div id="fryer-oil-details" class="fryer-oil-details" hidden>
-            <label class="fryer-field-label" for="fryer-oil-by">Хто фактично замінив олію
-              <input id="fryer-oil-by" type="text" maxlength="80" placeholder="Ім’я працівника" autocomplete="off">
-            </label>
-            <label class="fryer-field-label" for="fryer-oil-at">Коли фактично замінили олію
-              <input id="fryer-oil-at" type="datetime-local">
-            </label>
-          </div>
-          <label class="fryer-note-label">Примітка
-            <textarea id="fryer-note" maxlength="250" placeholder="Наприклад, замінено олію в лівому фритюрі"></textarea>
-          </label>
-        </fieldset>
-        <p id="fryer-editor-readonly" hidden>Перегляд без можливості редагування.</p>
-        <p id="fryer-editor-message" role="status"></p>
-        <div class="fryer-dialog-actions">
-          <button id="fryer-cancel" type="button">Закрити</button>
-          <button id="fryer-save" type="submit">Зберегти</button>
-        </div>
-      </form>
-    </section>
-    <section id="personal-view" class="personal-view" hidden aria-labelledby="personal-heading">
+  <article class="fryer-card">
+    <h2 id="fryer-heading">🛢️ Графік заміни олії у фритюрі</h2>
+    <p>Позначайте фактичну заміну олії лише в день її виконання. Для виправлень і записів заднім числом зверніться до адміністратора.</p>
+    <strong id="fryer-month"></strong>
+    <div class="fryer-stats"><span class="fryer-stat">🛢️ Замін олії: <strong id="fryer-oil-total">0</strong></span></div>
+    <p id="fryer-status" role="status">Завантажуємо…</p>
+    <div id="fryer-calendar" class="fryer-calendar" aria-label="Календар замін олії"></div>
+    <p class="fryer-help">Натисніть дату, щоб переглянути виконавця і примітку. Новий запис звичайний працівник може створити лише сьогодні.</p>
+  </article>
+  <article class="fryer-card fryer-history-card">
+    <div class="fryer-history-heading"><div><h2>Історія замін олії</h2><p>Хто створив або виправив запис, дата та зміст змін.</p></div><span class="fryer-history-limit">Останні 100 дій за місяць</span></div>
+    <p id="fryer-history-status" role="status" aria-live="polite">Завантажуємо журнал…</p>
+    <ol id="fryer-history-list" class="fryer-history-list" aria-label="Журнал заміни олії"></ol>
+  </article>
+</section>
+<section id="fryer-editor" class="fryer-editor" hidden>
+ <form id="fryer-form" class="fryer-dialog" role="dialog" aria-modal="true" aria-labelledby="fryer-editor-title">
+   <h3 id="fryer-editor-title"></h3>
+   <p id="fryer-performer-label" class="fryer-view-performer"></p>
+   <fieldset id="fryer-editor-fields">
+     <label><input id="fryer-oil" type="checkbox"> 🛢️ Олію замінено</label>
+     <label class="fryer-note-label">Примітка<textarea id="fryer-note" maxlength="250" placeholder="Наприклад, замінено олію в лівому фритюрі"></textarea></label>
+   </fieldset>
+   <p id="fryer-editor-readonly" hidden>Перегляд запису. Зміни за інші дати та виправлення виконує адміністратор.</p>
+   <p id="fryer-editor-message" role="status"></p>
+   <div class="fryer-dialog-actions">
+     <button id="fryer-cancel" type="button">Закрити</button>
+     <button id="fryer-save" type="submit">Зберегти</button>
+   </div>
+ </form>
+</section>
+<section id="personal-view" class="personal-view" hidden aria-labelledby="personal-heading">
       <article class="personal-card">
         <p class="personal-eyebrow">МІЙ КАБІНЕТ · <span id="month-label-profile"></span></p>
         <h2 id="personal-heading">Особиста статистика</h2>
@@ -375,6 +350,6 @@
 
 <script type="module" src="js/legacy-ui.js?v=20261111.binding2"></script>
 <script type="module" src="js/theme-switch.js?v=20261111.1"></script>
-<script type="module" src="js/fryer-maintenance.js?v=20261111.binding2"></script>
+<script type="module" src="js/fryer-maintenance.js?v=20261111.simple1"></script>
 </body>
 </html>
