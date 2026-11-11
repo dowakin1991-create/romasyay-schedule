@@ -109,9 +109,17 @@ function installOwnerSelfBinding() {
     if (!employees.some(e=>String(e.id)===id)) throw new Error('Оберіть ім’я.');
     const selectedName=employees.find(e=>String(e.id)===String(id))?.name||String(id);
     if(!confirm('Прив’язати ім’я «'+selectedName+'» саме до акаунта '+(currentUser().email||currentUser().uid)+'?'))return;
-    await bindOwnerEmployee(employees.map(e=>e.id),id,currentUser().uid);
+    try {
+      await bindOwnerEmployee(employees.map(e=>e.id),id,currentUser().uid);
+    } catch(error) {
+      if(!error.occupiedUid)throw error;
+      const other=error.occupiedUid;
+      const message='УВАГА! Ім’я «'+selectedName+'» прив’язане до іншого акаунта (UID '+other+'). Перенести його до '+(currentUser().email||currentUser().uid)+'? Попередня прив’язка втратить доступ до цього рядка.';
+      if(!confirm(message))return;
+      await bindOwnerEmployee(employees.map(e=>e.id),id,currentUser().uid,other);
+    }
     boundEmployeeId=id;
-    $('owner-self-status').textContent='Ваш акаунт прив’язано до обраного імені.';
+    $('owner-self-status').textContent='Прив’язку перевірено й збережено для поточного акаунта.';
   }));
 }
 function renderOwnerSelfBinding() {
