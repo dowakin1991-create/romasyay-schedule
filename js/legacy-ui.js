@@ -571,7 +571,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             if (isBanquet) thClass += dayEvent.type==='cleaning' ? ' cleaning-th' : ' banquet-th';
             else if (activeColDay === i) thClass += ' highlight-col';
             
-            let banquetLabel = `<span class="fryer-date-badge" hidden onclick="event.stopPropagation();openFryerDay(${i})" role="button" tabindex="0" aria-label="Переглянути заміну олії">🛢 Фритюр</span>`;
+            let banquetLabel = `<span class="fryer-date-badge" hidden onclick="event.stopPropagation();openFryerDay(${i})" onkeydown="if(event.key===\u0027Enter\u0027||event.key===\u0027 \u0027){event.preventDefault();event.stopPropagation();openFryerDay(${i})}" role="button" tabindex="0" aria-label="Переглянути заміну олії">🛢 Фритюр</span>`;
 
             headHtml += `<th data-day="${i}" class="${thClass}" style="line-height: 1.1; min-width: 50px; cursor: pointer;" onclick="handleHeaderClick(${i})">
                 <span class="day-number">${i}</span><br>
@@ -649,7 +649,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             if (isBanquet) thClass += dayEvent.type==='cleaning' ? ' cleaning-th' : ' banquet-th';
             else if (activeColDay === i) thClass += ' highlight-col';
             
-            let banquetLabel = `<span class="fryer-date-badge" hidden onclick="event.stopPropagation();openFryerDay(${i})" role="button" tabindex="0" aria-label="Переглянути заміну олії">🛢 Фритюр</span>`;
+            let banquetLabel = `<span class="fryer-date-badge" hidden onclick="event.stopPropagation();openFryerDay(${i})" onkeydown="if(event.key===\u0027Enter\u0027||event.key===\u0027 \u0027){event.preventDefault();event.stopPropagation();openFryerDay(${i})}" role="button" tabindex="0" aria-label="Переглянути заміну олії">🛢 Фритюр</span>`;
 
         headHtml += `<th data-day="${i}" class="${thClass}" style="line-height: 1.1; min-width: 50px; cursor: pointer;" onclick="openDaySettings(${i})">
                 <span class="day-number">${i}</span><br>
