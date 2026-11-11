@@ -1,4 +1,4 @@
-import { daysInMonth, dutyName, monthLabel, shiftType } from './ui.js?v=20261110.supra';
+import { daysInMonth, monthLabel, shiftType } from './ui.js?v=20261110.supra';
 
 // Canvas draws text directly: no HTML injection, remote renderer or CSS-mask support needed.
 export async function exportHalfMonth(date, data, half, legacy = null) {
@@ -35,7 +35,7 @@ export async function exportHalfMonth(date, data, half, legacy = null) {
     box(x, 55, cell, top - 55, cleaning ? '#d40079' : banquet ? '#c46710' : weekend ? '#334155' : '#155e63');
     ctx.fillStyle = '#fff'; ctx.font = 'bold 17px sans-serif'; ctx.fillText(String(day), x + cell / 2, 77);
     ctx.font = '12px sans-serif'; ctx.fillText(['Нд','Пн','Вт','Ср','Чт','Пт','Сб'][new Date(date.getFullYear(),date.getMonth(),day).getDay()], x + cell / 2, 94);
-    ctx.font = '10px sans-serif'; ctx.fillText(dutyName(date.getFullYear(),date.getMonth(),day).split(' ').slice(1).join(' '), x + cell / 2, 108);
+
     if (banquet) ctx.fillText(cleaning ? 'ПРИБ.' : 'БЕНКЕТ', x + cell / 2, 122);
     data.employees.forEach((employee, index) => {
       const y = top + index * rowHeight;
