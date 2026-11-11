@@ -80,23 +80,54 @@ service cloud.firestore {
             && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80));
       allow delete: if false;
     }
-    // Atomic, append-only fryer audit. Client edits must create their matching history event.
+    // The record of an oil change and its append-only history are written in one transaction.
+    // A worker may create today's entry only; administrators may correct any date.
     function fryerMonthOk(month) {
       return month.matches('20[0-9][0-9]-(0[1-9]|1[0-2])');
     }
     function fryerDayOk(dayKey) {
       return dayKey is string && dayKey.matches('([1-9]|[12][0-9]|3[01])');
     }
+    function fryerToday() {
+      // Ukraine UTC+2 winter, UTC+3 summer. Transition-night edge cases
+      // should be verified with emulators; server time prevents clock spoofing.
+      return request.time + duration.value(request.time.month() >= 4 && request.time.month() <= 9 ? 3 : 2, 'h');
+    }
     function validFryerEntry(entry) {
       return entry is map
-        && entry.keys().hasOnly(['cleaned', 'oilChanged', 'note', 'oilPerformedBy', 'oilPerformedAt'])
-        && entry.keys().hasAll(['cleaned', 'oilChanged', 'note'])
-        && entry.cleaned is bool && entry.oilChanged is bool
-        && entry.note is string && entry.note.size() <= 250
-        && entry.get('oilPerformedBy','') is string
-        && entry.get('oilPerformedBy','').size() <= 80
-        && entry.get('oilPerformedAt','') is string
-        && entry.get('oilPerformedAt','').size() <= 30;
+        && entry.keys().hasOnly(['oilChanged','note','performedBy','performedUid','cleaned','oilPerformedBy','oilPerformedAt'])
+        && entry.get('oilChanged', false) is bool
+        && entry.get('note', '') is string
+        && entry.get('note', '').size() <= 250
+        && entry.get('performedBy', '') is string
+        && entry.get('performedBy', '').size() <= 80
+        && entry.get('performedUid', '') is string
+        && entry.get('performedUid', '').size() <= 128
+        && entry.get('oilPerformedBy', '') is string
+        && entry.get('oilPerformedAt', '') is string;
+    }
+    function workerFryerAllowed() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && approvedAccount()
+        && exists(/databases/$(database)/documents/teamAccess/$(request.auth.uid))
+        && get(/databases/$(database)/documents/teamAccess/$(request.auth.uid)).data.employeeId is string
+        && get(/databases/$(database)/documents/employeeAccess/$(get(/databases/$(database)/documents/teamAccess/$(request.auth.uid)).data.employeeId)).data.uid == request.auth.uid;
+    }
+    function workerFryerToday(month, dayKey) {
+      let now = fryerToday();
+      return month == string(now.year()) + '-' + (now.month() < 10 ? '0' : '') + string(now.month())
+        && dayKey == string(now.day());
+    }
+    function workerFryerChange(month, audit, oldDays) {
+      return workerFryerAllowed()
+        && workerFryerToday(month, audit.dayKey)
+        && oldDays.get(audit.dayKey, {}) == {}
+        && audit.after.keys().hasOnly(['oilChanged','note','performedBy','performedUid'])
+        && audit.after.oilChanged == true
+        && audit.after.performedUid == request.auth.uid
+        && audit.after.performedBy is string && audit.after.performedBy.size() > 0
+        && audit.after.performedBy.size() <= 80
+        && validFryerEntry(audit.after);
     }
     function fryerPair(month) {
       let auditId = request.resource.data.lastAuditId;
@@ -109,40 +140,41 @@ service cloud.firestore {
         && fryerDayOk(audit.dayKey)
         && audit.before == oldDays.get(audit.dayKey, {})
         && audit.after == request.resource.data.days.get(audit.dayKey, {})
-        && oldDays.diff(request.resource.data.days).affectedKeys().hasOnly([audit.dayKey]);
+        && oldDays.diff(request.resource.data.days).affectedKeys().hasOnly([audit.dayKey])
+        && (isAdmin() || workerFryerChange(month, audit, oldDays));
     }
     match /fryerMaintenance/{month} {
       allow read: if canReadSchedule();
-      allow create, update: if isAdmin() && fryerMonthOk(month)
-        && request.resource.data.keys().hasOnly(['days', 'updatedAt', 'lastAuditId'])
-        && request.resource.data.keys().hasAll(['days', 'updatedAt', 'lastAuditId'])
+      allow create, update: if (isAdmin() || workerFryerAllowed()) && fryerMonthOk(month)
+        && request.resource.data.keys().hasOnly(['days','updatedAt','lastAuditId'])
+        && request.resource.data.keys().hasAll(['days','updatedAt','lastAuditId'])
         && request.resource.data.days is map
         && request.resource.data.days.size() <= 31
         && request.resource.data.updatedAt == request.time
         && fryerPair(month);
-      // The parent document is never deleted by a client: use a journalled correction.
       allow delete: if false;
       match /history/{auditId} {
         allow get, list: if canReadSchedule();
-        allow create: if isAdmin() && fryerMonthOk(month)
+        allow create: if (isAdmin() || workerFryerAllowed()) && fryerMonthOk(month)
           && auditId.size() == 20
           && request.resource.data.keys().hasOnly(['dayKey','actorUid','actorName','createdAt','before','after'])
           && request.resource.data.keys().hasAll(['dayKey','actorUid','actorName','createdAt','before','after'])
           && fryerDayOk(request.resource.data.dayKey)
           && request.resource.data.actorUid == request.auth.uid
-          && request.resource.data.actorName is string
-          && request.resource.data.actorName.size() <= 80
+          && request.resource.data.actorName is string && request.resource.data.actorName.size() <= 80
           && request.resource.data.createdAt == request.time
-          && request.resource.data.before is map
-          && request.resource.data.after is map
+          && request.resource.data.before is map && request.resource.data.after is map
           && (request.resource.data.before == {} || validFryerEntry(request.resource.data.before))
           && (request.resource.data.after == {} || validFryerEntry(request.resource.data.after))
           && request.resource.data.before != request.resource.data.after
           && getAfter(/databases/$(database)/documents/fryerMaintenance/$(month)).data.lastAuditId == auditId
           && getAfter(/databases/$(database)/documents/fryerMaintenance/$(month)).data.days.get(request.resource.data.dayKey, {}) == request.resource.data.after
           && (exists(/databases/$(database)/documents/fryerMaintenance/$(month))
-                ? get(/databases/$(database)/documents/fryerMaintenance/$(month)).data.days.get(request.resource.data.dayKey, {}) == request.resource.data.before
-                : request.resource.data.before == {});
+              ? get(/databases/$(database)/documents/fryerMaintenance/$(month)).data.days.get(request.resource.data.dayKey, {}) == request.resource.data.before
+              : request.resource.data.before == {})
+          && (isAdmin() || workerFryerChange(month, request.resource.data,
+             exists(/databases/$(database)/documents/fryerMaintenance/$(month))
+               ? get(/databases/$(database)/documents/fryerMaintenance/$(month)).data.days : {}));
         allow update, delete: if false;
       }
     }
