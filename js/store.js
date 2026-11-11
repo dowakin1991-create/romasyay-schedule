@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { firebaseConfig } from "./config.js?v=20261015.2";
+import { firebaseConfig } from "./config.js?v=20261111.rolefix";
 
 export const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
