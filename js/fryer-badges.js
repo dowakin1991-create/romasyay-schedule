@@ -31,4 +31,5 @@ window.openFryerDay=day=>{
 window.addEventListener('romasyay:month-change',watch);
 window.addEventListener('romasyay:schedule-render',paint);
 window.addEventListener('romasyay:access-change',e=>{allowed=e.detail?.allowed===true;watch()});
-watchAuth(user=>{if(document.body.dataset.page==='admin'){allowed=isAdmin(user);watch()}});
+watchAuth(user=>{if(document.body.dataset.page==='admin'){allowed=isAdmin(user);watch()}else if(document.getElementById('private-schedule')?.hidden===false){allowed=true;watch()}});
+if(document.body.dataset.page!=='admin'&&document.getElementById('private-schedule')?.hidden===false){allowed=true;watch()}
