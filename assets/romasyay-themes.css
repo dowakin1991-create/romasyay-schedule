@@ -1,0 +1,109 @@
+/* Romasyay brand palettes. Loaded last. Calendar semantics stay intact. */
+:root,html[data-theme="light"] {
+ color-scheme:light;
+ --bg-body:#f7f0e3;--bg-card:#fffaf1;--text-main:#30251b;--primary:#a34a18;
+ --border:#d9c8b0;--weekend:#eee0cb;
+ --glass:#fff9edee;--glass-solid:#fffaf1;--glass-line:#e5d5c0;
+ --glass-shadow:0 10px 26px rgba(83,53,24,.12);
+ --control:#fff4e1;--muted:#665545;
+ --row-1:#f9ece3;--row-2:#f7eedc;--row-3:#fff1d4;--row-4:#f5e9e0;--row-5:#f6eedf;
+ --brand-accent:#aa4a18;--brand-contrast:#fff8ef;
+}
+html[data-theme="dark"]{
+ color-scheme:dark;
+ --bg-body:#0d0d0d;--bg-card:#1b1b1b;--text-main:#f7eee2;--primary:#e87921;
+ --border:#494039;--weekend:#292523;
+ --glass:#1a1816ee;--glass-solid:#1b1a19;--glass-line:#514236;
+ --glass-shadow:0 12px 32px rgba(0,0,0,.4);
+ --control:#292521;--muted:#c5b5a2;
+ --row-1:#24201e;--row-2:#252321;--row-3:#29241f;--row-4:#25201f;--row-5:#252322;
+ --brand-accent:#ed822c;--brand-contrast:#19110b;
+}
+html[data-theme="light"] body[data-page],html[data-theme="dark"] body[data-page]{
+ color:var(--text-main)!important;
+ background:var(--bg-body)!important;
+}
+html[data-theme="light"] body[data-page]{
+ background-image:radial-gradient(ellipse at 0 0,#fff9ef 0%,transparent 52%),radial-gradient(ellipse at 100% 30%,#efe0c8 0%,transparent 62%)!important;
+}
+html[data-theme="dark"] body[data-page]{
+ background-image:radial-gradient(ellipse at 0 0,#312015 0%,transparent 55%),radial-gradient(ellipse at 100% 45%,#211c19 0%,transparent 65%)!important;
+}
+html[data-theme] body[data-page] header,
+html[data-theme] body[data-page] .account-panel,
+html[data-theme] body[data-page] .admin-controls,
+html[data-theme] body[data-page] .personal-card,
+html[data-theme] body[data-page] .modal-content,
+html[data-theme] body[data-page] .receipt-viewer,
+html[data-theme] body[data-page] .directory-card,
+html[data-theme] body[data-page] .admin-tools-panel,
+html[data-theme] body[data-page] #owner-users-panel{
+ background:var(--glass-solid)!important;
+ border-color:var(--border)!important;
+ color:var(--text-main);
+ box-shadow:var(--glass-shadow);
+}
+html[data-theme] body[data-page] .table-wrapper,
+html[data-theme] body[data-page] .table-wrapper table{
+ background:var(--bg-card)!important;
+ border-color:var(--border)!important;
+}
+html[data-theme] body[data-page] .table-wrapper thead th:not(.weekend):not(.banquet-th):not(.cleaning-th){
+ background:var(--primary)!important;color:var(--brand-contrast)!important;
+}
+html[data-theme] body[data-page] .table-wrapper thead th.weekend:not(.banquet-th):not(.cleaning-th){
+ background:var(--weekend)!important;color:var(--text-main)!important;
+}
+html[data-theme] body[data-page] .table-wrapper tbody td:first-child:not(.highlight-name){
+ background:var(--bg-card)!important;color:var(--text-main)!important;
+}
+html[data-theme] body[data-page] .table-wrapper tbody td:not(:first-child):not(.banquet-td):not(.cleaning-td):not(.highlight-col):not(.current-day-td){
+ background:var(--bg-card);color:var(--text-main);
+}
+html[data-theme] body[data-page] .nav-btn,
+html[data-theme] body[data-page] .account-panel button:not(.text-button),
+html[data-theme] body[data-page] .modal-btn:not(.btn-danger):not(.btn-confirm),
+html[data-theme] body[data-page] input,
+html[data-theme] body[data-page] select,
+html[data-theme] body[data-page] textarea{
+ background:var(--control);color:var(--text-main);border-color:var(--border);
+}
+html[data-theme] body[data-page] .profile-icon,
+html[data-theme] body[data-page] .worker-tabs button[aria-pressed="true"],
+html[data-theme] body[data-page] .add-btn,
+html[data-theme] body[data-page] .export-btn,
+html[data-theme] body[data-page] .tg-btn,
+html[data-theme] body[data-page] #admin-link.admin-open-button,
+html[data-theme] body[data-page] .auth-gate form>button[type="submit"]{
+ background:var(--brand-accent)!important;
+ border-color:var(--brand-accent)!important;
+ color:var(--brand-contrast)!important;
+}
+html[data-theme] body[data-page] .worker-tabs{background:var(--control)!important;border-color:var(--border)}
+html[data-theme] body[data-page] .personal-total strong{color:var(--brand-accent)}
+html[data-theme] body[data-page] .personal-bar.is-work{background:var(--brand-accent)}
+html[data-theme] body[data-page] .admin-badge[data-role="owner"]{
+ background:var(--brand-accent)!important;color:var(--brand-contrast)!important;
+}
+@media(min-width:960px){
+ html[data-theme] body[data-page="index"] .container>header,
+ html[data-theme] body[data-page="index"] .profile-push-row #account-panel,
+ html[data-theme] body[data-page="index"] .profile-push-row #push-panel,
+ html[data-theme] body[data-page="index"] #private-schedule .worker-tabs,
+ html[data-theme] body[data-page="index"] #schedule-view #redDotToggleBtn:not(.on){
+  background:var(--glass-solid)!important;border-color:var(--border)!important;color:var(--text-main)!important;
+ }
+ html[data-theme] body[data-page="index"] #private-schedule .worker-tabs button[aria-pressed="true"]{background:var(--brand-accent)!important;color:var(--brand-contrast)!important}
+}
+.theme-switch{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-height:44px;min-width:44px;padding:8px 12px;
+ border:1px solid var(--border);border-radius:14px;
+ background:var(--control);color:var(--text-main);
+ font:700 13px Montserrat,system-ui,sans-serif;cursor:pointer;
+ flex:0 0 auto;
+}
+.theme-switch:focus-visible{outline:3px solid var(--brand-accent);outline-offset:2px}
+.theme-switch-icon{font-size:19px;line-height:1}
+@media(max-width:600px){.theme-switch{padding:7px;min-width:42px;min-height:42px;border-radius:12px}.theme-switch-label{display:none}}
+@media(prefers-reduced-motion:reduce){.theme-switch{transition:none}}
