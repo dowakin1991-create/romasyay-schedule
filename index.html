@@ -299,6 +299,14 @@
         <fieldset id="fryer-editor-fields">
           <label><input id="fryer-cleaned" type="checkbox"> 🧽 Фритюр прибрано</label>
           <label><input id="fryer-oil" type="checkbox"> 🛢️ Олію замінено</label>
+          <div id="fryer-oil-details" class="fryer-oil-details" hidden>
+            <label class="fryer-field-label" for="fryer-oil-by">Хто фактично замінив олію
+              <input id="fryer-oil-by" type="text" maxlength="80" placeholder="Ім’я працівника" autocomplete="off">
+            </label>
+            <label class="fryer-field-label" for="fryer-oil-at">Коли фактично замінили олію
+              <input id="fryer-oil-at" type="datetime-local">
+            </label>
+          </div>
           <label class="fryer-note-label">Примітка
             <textarea id="fryer-note" maxlength="250" placeholder="Наприклад, замінено олію в лівому фритюрі"></textarea>
           </label>
@@ -367,6 +375,6 @@
 
 <script type="module" src="js/legacy-ui.js?v=20261111.fryer3"></script>
 <script type="module" src="js/theme-switch.js?v=20261111.1"></script>
-<script type="module" src="js/fryer-maintenance.js?v=20261111.audit1"></script>
+<script type="module" src="js/fryer-maintenance.js?v=20261111.audit2"></script>
 </body>
 </html>
