@@ -44,13 +44,13 @@ export async function exportHalfMonth(date, data, half, legacy = null) {
       ctx.strokeStyle = '#155e63'; ctx.lineWidth = 3; ctx.lineCap = 'round';
       if (type === 'soho' || type === 'supra') {
         // Draw venue shifts as compact colored badges in the exported PNG.
-        const badgeWidth = type === 'supra' ? 51 : 45, badgeHeight = 20;
+        const badgeWidth = type === 'supra' ? 45 : 45, badgeHeight = 20;
         ctx.fillStyle = type === 'supra' ? '#4fc3f7' : '#e00018';
         ctx.fillRect(cx - badgeWidth / 2, cy - 4, badgeWidth, badgeHeight);
         ctx.fillStyle = '#090909';
         ctx.font = '900 11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(type === 'supra' ? 'SUPRA' : 'SOHO', cx, cy + 10);
+        ctx.fillText(type === 'supra' ? 'БОР' : 'ДРО', cx, cy + 10);
       } else if (type !== 'none') {
         ctx.beginPath(); ctx.moveTo(cx - 7, cy + 7); ctx.lineTo(cx + 7, cy - 7);
         if (type === 'full' || type === 'first') { ctx.moveTo(cx - 7, cy - 7); ctx.lineTo(cx, cy); }
