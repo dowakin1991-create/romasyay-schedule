@@ -4,7 +4,7 @@ import { watchTeamAccess, watchViewerAccess } from './access.js?v=20261111.bindi
 import { initOwnerPanel } from './owner.js?v=20261111.binding2';
 import { initAccount, openAccount, setScheduleAccess } from './account.js?v=20261111.binding2';
 import { isOwner, isPrimaryOwner, currentUser, canEditWorker, ensureWorkerSession, isAdmin, login, logout, watchAuth } from './auth.js?v=20261111.rolefix';
-import { ensureMonthRoster, moveEmployee, subscribeSchedule, monthId, updateSchedule, setAvailability, employeeAccess, bindEmployee, bindOwnerEmployee, readReceipt } from './store.js?v=20261111.bindingfix';
+import { ensureMonthRoster, syncFryerShiftRoster, moveEmployee, subscribeSchedule, monthId, updateSchedule, setAvailability, employeeAccess, bindEmployee, bindOwnerEmployee, readReceipt } from './store.js?v=20261111.bindingfix';
 import { dutyName as getDutyName, shiftCount, toast } from './ui.js?v=20261015.2';
 import { withBusy, recordChange, changeJournal, clearChangeJournal } from './session.js?v=20261017.4';
 import { compressReceipt } from './receipts.js?v=20261015.2';
@@ -49,6 +49,7 @@ function status(text, error = false) {
 function render() {
   $('month-label').textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
   if (admin) renderAdmin(); else renderIndex();
+  window.dispatchEvent(new Event('romasyay:schedule-render'));
 }
 let notificationFocusTimer;
 function focusNotificationDay(day,endDay=day,days=null) {
@@ -64,7 +65,7 @@ function focusNotificationDay(day,endDay=day,days=null) {
 }
 window.romasyayCurrentMonth=()=>getDocId();
 function switchWorkerTab(tab){
-  for(const name of ['schedule','fryer','personal']){
+  for(const name of ['schedule','personal']){
     const view=$(name+'-view'),button=$(name+'-tab');
     if(view)view.hidden=name!==tab;
     button?.setAttribute('aria-pressed',String(name===tab));
@@ -72,7 +73,7 @@ function switchWorkerTab(tab){
   if(tab==='personal')renderPersonalDashboard();
 }
 window.showScheduleView=()=>switchWorkerTab('schedule');
-window.showFryerView=()=>switchWorkerTab('fryer');
+window.showFryerView=()=>window.dispatchEvent(new Event('romasyay:open-fryer'));
 window.showPersonalView=()=>switchWorkerTab('personal');
 function renderPersonalDashboard(){
   $('month-label-profile').textContent=`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
@@ -155,6 +156,9 @@ async function loadData() {
       console.error(error); loadError = true; render();
       toast('Не вдалося перенести список із попереднього місяця. Можна додати працівників вручну.', 'error');
     }
+    if (ticket !== generation || !allowed) return;
+    try { await syncFryerShiftRoster(getDocId()); }
+    catch (error) { console.warn('Fryer shift roster synchronization:',error); }
     if (ticket !== generation || !allowed) return;
   }
   unsubscribe = subscribeSchedule(getDocId(), data => {
@@ -567,7 +571,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             if (isBanquet) thClass += dayEvent.type==='cleaning' ? ' cleaning-th' : ' banquet-th';
             else if (activeColDay === i) thClass += ' highlight-col';
             
-            let banquetLabel = isBanquet ? `<span class="${dayEvent.type==='cleaning'?'cleaning-label':'banquet-label'}" title="${dayEvent.type==='cleaning'?'Генеральне прибирання':'Бенкет'}">${dayEvent.type==='cleaning'?'ГЕН.':'БЕНК.'}</span>` : '';
+            let banquetLabel = '<span class="fryer-date-badge" hidden>● Фритюр</span>';
 
             headHtml += `<th data-day="${i}" class="${thClass}" style="line-height: 1.1; min-width: 50px; cursor: pointer;" onclick="handleHeaderClick(${i})">
                 <span class="day-number">${i}</span><br>
@@ -645,7 +649,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             if (isBanquet) thClass += dayEvent.type==='cleaning' ? ' cleaning-th' : ' banquet-th';
             else if (activeColDay === i) thClass += ' highlight-col';
             
-            let banquetLabel = isBanquet ? `<span class="${dayEvent.type==='cleaning'?'cleaning-label':'banquet-label'}" title="${dayEvent.type==='cleaning'?'Генеральне прибирання':'Бенкет'}">${dayEvent.type==='cleaning'?'ГЕН.':'БЕНК.'}</span>` : '';
+            let banquetLabel = '<span class="fryer-date-badge" hidden>● Фритюр</span>';
 
         headHtml += `<th data-day="${i}" class="${thClass}" style="line-height: 1.1; min-width: 50px; cursor: pointer;" onclick="openDaySettings(${i})">
                 <span class="day-number">${i}</span><br>
