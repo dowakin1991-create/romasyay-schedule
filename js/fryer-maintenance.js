@@ -4,13 +4,13 @@ import { currentUser } from './auth.js?v=20261111.rolefix';
 
 const db=getFirestore(firebaseApp), $=id=>document.getElementById(id);
 const months=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
-const monthsTitle=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Грудень'];
+const monthsTitle=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 const week=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
 let access=false,month='',unsubscribeMonth=null,unsubscribeHistory=null,ticket=0,entries={},loaded=false,selectedDay=null,saving=false;
 const entry=x=>({oilChanged:x?.oilChanged===true,note:typeof x?.note==='string'?x.note:'',performedBy:typeof x?.performedBy==='string'?x.performedBy:typeof x?.oilPerformedBy==='string'?x.oilPerformedBy:'',performedUid:typeof x?.performedUid==='string'?x.performedUid:''});
 const monthKey=()=>window.romasyayCurrentMonth?.()||'';
 const dateKey=(y,m,d)=>y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const today=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t)?.value;return part('year')+'-'+part('month')+'-'+part('day')};
 function userLabel(user){return String(user?.displayName?.trim()||user?.email?.split('@')[0]||'Працівник').slice(0,80)}
 function close(){selectedDay=null;$('fryer-editor').hidden=true}
 function reset(){ticket++;unsubscribeMonth?.();unsubscribeHistory?.();unsubscribeMonth=unsubscribeHistory=null;entries={};loaded=false;close();$('fryer-history-list').replaceChildren()}
