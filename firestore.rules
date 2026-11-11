@@ -89,9 +89,14 @@ service cloud.firestore {
     }
     function validFryerEntry(entry) {
       return entry is map
-        && entry.keys().hasOnly(['cleaned', 'oilChanged', 'note'])
+        && entry.keys().hasOnly(['cleaned', 'oilChanged', 'note', 'oilPerformedBy', 'oilPerformedAt'])
+        && entry.keys().hasAll(['cleaned', 'oilChanged', 'note'])
         && entry.cleaned is bool && entry.oilChanged is bool
-        && entry.note is string && entry.note.size() <= 250;
+        && entry.note is string && entry.note.size() <= 250
+        && entry.get('oilPerformedBy','') is string
+        && entry.get('oilPerformedBy','').size() <= 80
+        && entry.get('oilPerformedAt','') is string
+        && entry.get('oilPerformedAt','').size() <= 30;
     }
     function fryerPair(month) {
       let auditId = request.resource.data.lastAuditId;
