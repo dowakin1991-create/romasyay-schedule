@@ -208,7 +208,7 @@ body[data-page="admin"] #push-panel{display:none!important}
 <meta name="theme-color" content="#173e3a">
 <script>try{const t=localStorage.getItem('romasyay.schedule.theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch{document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
 <link rel="stylesheet" href="assets/romasyay-themes.css?v=20261111.1">
-</head>
+<link rel="stylesheet" href="assets/fryer-maintenance.css?v=20261111.simple2"></head>
 <body data-page="admin"><section id="admin-auth-loading" role="status" aria-live="polite"><div class="modal-content"><h3>Відновлюємо вхід…</h3><p>Перевіряємо збережену сесію РОМАСЯЙ ГРАФІК.</p></div></section><section id="login-panel" hidden><form id="login-form" class="modal-content">
 <h3>Вхід адміністратора</h3><label>Пошта<input id="login-email" type="email" autocomplete="username" required></label>
 <label>Пароль<input id="login-password" type="password" autocomplete="current-password" required></label>
@@ -264,6 +264,22 @@ body[data-page="admin"] #push-panel{display:none!important}
     </div>
     </details>
 
+    <details id="fryer-admin-panel" class="fryer-card fryer-admin-panel">
+      <summary>🛢️ Фритюр — внесення та виправлення заміни олії</summary>
+      <p>Тільки власники й адміністратори. Тут можна додати запис заднім числом, змінити виконавця, примітку або скасувати помилкову позначку.</p>
+      <form id="fryer-admin-form">
+        <div class="fryer-admin-fields">
+          <label>Дата заміни <input id="fryer-admin-date" type="date" required></label>
+          <label>Виконавець <input id="fryer-admin-person" type="text" maxlength="80" required placeholder="Ім’я працівника"></label>
+          <label class="fryer-admin-check"><input id="fryer-admin-done" type="checkbox" checked> Олію замінено</label>
+          <label class="fryer-admin-note">Примітка <textarea id="fryer-admin-note" maxlength="250" placeholder="Необов’язково"></textarea></label>
+        </div>
+        <p id="fryer-admin-current" aria-live="polite"></p>
+        <p id="fryer-admin-status" role="status" aria-live="polite"></p>
+        <button type="submit">Зберегти запис та історію</button>
+      </form>
+      <p class="fryer-help">Кожне редагування додається до незмінного журналу. Приховані старі записи про прибирання не видаляються автоматично.</p>
+    </details>
     <div class="table-wrapper">
         <table id="admin-table">
             <thead><tr id="h-row"></tr></thead>
@@ -325,5 +341,5 @@ body[data-page="admin"] #push-panel{display:none!important}
 
 <script type="module" src="js/legacy-ui.js?v=20261111.binding2"></script>
 <div id="notice-editor-modal" class="notice-editor-overlay" hidden><section class="notice-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="notice-editor-title"><h3 id="notice-editor-title">Перевірте сповіщення</h3><p>Приберіть непотрібні пункти хрестиком. Вони не потраплять у повідомлення.</p><div id="notice-editor-list"></div><p id="notice-editor-count" role="status"></p><div class="notice-editor-actions"><button id="notice-editor-cancel" type="button">Скасувати</button><button id="notice-editor-send" type="button">Надіслати команді</button></div></section></div><script type="module" src="js/theme-switch.js?v=20261111.1"></script>
-</body>
+<script type="module" src="js/fryer-admin.js?v=20261111.simple1"></script></body>
 </html>
