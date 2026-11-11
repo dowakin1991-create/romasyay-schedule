@@ -1,4 +1,4 @@
-import {initPush, setPushAccess, disconnectPush, notifySchedule} from './push.js?v=20261111.2';
+import {initPush, setPushAccess, disconnectPush, notifySchedule} from './push.js?v=20261111.fryer2';
 import { initUserDirectory, refreshOwnerUserDirectory, watchMyApproval } from './user-directory.js?v=20261031.presence';
 import { watchTeamAccess, watchViewerAccess, syncTeamAccess } from './access.js?v=20261019.8';
 import { initOwnerPanel } from './owner.js?v=20261019.8';
