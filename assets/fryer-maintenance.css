@@ -71,3 +71,49 @@
 #fryer-admin-form>button{cursor:pointer;padding:12px 16px;border:0;border-radius:11px;background:var(--brand-accent,var(--primary));color:#fff;font-size:15px;font-weight:800}
 #fryer-admin-status{min-height:20px}
 @media(max-width:600px){.fryer-admin-fields{grid-template-columns:minmax(0,1fr)}}
+
+/* 2026 Romasyay: integrated fryer journal, accessible contrast, premium schedule. */
+#fryer-view[hidden],#fryer-editor[hidden]{display:none!important}
+.fryer-journal-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;margin:0 0 14px 12px;padding:13px 22px;min-height:50px;border:1.5px solid #aa4619;border-radius:15px;background:linear-gradient(145deg,#fff9ee,#fce9cb);color:#733012;font:800 15px Montserrat,system-ui,sans-serif;box-shadow:0 4px 15px #75351018;cursor:pointer;vertical-align:middle;transition:transform .15s,box-shadow .15s}
+.fryer-journal-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px #7535102e}
+.fryer-journal-overlay{position:fixed;inset:0;z-index:7000;display:flex;align-items:center;justify-content:flex-end;padding:18px;box-sizing:border-box}
+.fryer-journal-scrim{position:absolute;inset:0;background:rgba(22,14,7,.58);backdrop-filter:blur(7px);cursor:pointer}
+.fryer-journal-panel{position:relative;z-index:1;display:flex;flex-direction:column;gap:12px;box-sizing:border-box;overflow-y:auto;width:min(100%,470px);max-height:calc(100dvh - 36px);padding:clamp(18px,2vw,28px);border-radius:25px;border:1px solid #d7b994;background:var(--bg-card,#fffaf2);color:var(--text-main,#302017);box-shadow:0 24px 75px #150c0759}
+.fryer-journal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.fryer-journal-top h2{font-size:clamp(20px,2vw,25px);margin:5px 0 7px;font-weight:900;color:var(--text-main)}
+.fryer-journal-top p{font-size:14px;line-height:1.5;margin:0;color:var(--muted,#695746)}
+.fryer-journal-eyebrow{font-weight:800;font-size:10px;letter-spacing:.11em;color:#b6531d}
+#fryer-journal-close{width:40px;height:40px;flex:none;border-radius:13px;border:1px solid #dac4a6;background:var(--control,#fff4e6);color:var(--text-main);cursor:pointer;font-size:18px}
+.fryer-journal-month{font-weight:800;color:var(--text-main);margin:8px 0 0}
+#fryer-status{font-size:12px;color:var(--muted,#685343);margin:0}
+.fryer-journal-summary{display:flex;align-items:center;gap:9px;padding:12px 14px;border-radius:13px;border:1px solid #e4cba8;background:var(--control,#fff0dd)}
+.fryer-journal-summary strong{font-size:26px;color:#b64b16}
+.fryer-journal-summary span{font-size:13px;font-weight:650}
+.fryer-journal-entries{display:grid;gap:9px}
+.fryer-journal-entry{display:flex;align-items:center;gap:12px;min-width:0;padding:12px;background:var(--control,#fff7ed);border:1px solid var(--border,#e1c8a6);border-radius:14px;box-shadow:0 3px 8px #2314090c}
+.fryer-entry-symbol{display:flex;width:42px;height:42px;align-items:center;justify-content:center;flex-shrink:0;border-radius:12px;background:#f8dfb6;font-size:20px}
+.fryer-journal-entry strong{display:block;font-weight:850;font-size:14px;color:var(--text-main);overflow-wrap:anywhere}
+.fryer-journal-entry p{margin:5px 0 0;color:var(--muted,#6d5542);font-size:12px;line-height:1.35}
+.fryer-empty{font-size:14px;color:var(--muted);padding:18px 0}
+.fryer-journal-submit{padding:13px 0;display:grid;gap:10px;border-top:1px solid var(--border,#e2c9ae)}
+#fryer-journal-eligibility{font-size:12px;line-height:1.5;margin:0;color:var(--muted)}
+#fryer-start{min-height:48px;padding:12px;border:0;border-radius:12px;background:linear-gradient(100deg,#b64611,#da681e);color:#fff;font:800 14px Montserrat,system-ui;cursor:pointer;box-shadow:0 5px 15px #9f3f1b33}
+#fryer-start:disabled{background:#d9d1c5;color:#736b60;box-shadow:none;cursor:not-allowed;opacity:.85}
+.fryer-history-section{border-top:1px solid var(--border,#d7b994);padding-top:13px}
+.fryer-history-section h3{margin:0 0 8px;font-size:17px}
+.fryer-history-item{background:var(--control,#fff7ee)!important;color:var(--text-main)}
+body.fryer-journal-open{overflow:hidden}
+.fryer-editor{z-index:7600!important}
+.fryer-date-badge{display:inline-flex;white-space:nowrap;align-items:center;justify-content:center;border-radius:10px;margin-top:6px;padding:4px 7px;background:#fff1da;color:#73330e!important;border:1px solid #ffca8a;font:bold 10px Montserrat,system-ui;line-height:1;cursor:pointer;box-shadow:0 3px 6px #4b260a33}
+.fryer-date-badge[hidden]{display:none!important}
+th.has-fryer{position:relative}
+#schedule thead th[data-day],#admin-table thead th[data-day]{vertical-align:middle;min-height:70px;font-weight:800}
+#schedule tbody td:first-child,#admin-table tbody td:first-child{color:var(--text-main)!important;font-weight:800!important;text-shadow:none!important}
+#schedule tbody td:first-child.highlight-name,#admin-table tbody td:first-child.highlight-name{background:#c9f3a2!important;color:#183419!important;border-left:4px solid #70bb28!important}
+#schedule tbody td:first-child.highlight-name *,#admin-table tbody td:first-child.highlight-name *{color:#183419!important}
+#schedule td.highlight-col,#admin-table td.highlight-col{background:#e3f8c4!important;color:#213622!important;border-left:1px solid #99d066!important;border-right:1px solid #99d066!important}
+#schedule td.highlight-row,#admin-table td.highlight-row{color:var(--text-main)!important}
+#schedule tbody tr:hover td,#admin-table tbody tr:hover td{filter:brightness(.99)}
+#schedule tbody td,#admin-table tbody td{font-weight:600;color:var(--text-main)}
+#schedule thead th,#admin-table thead th{font-weight:900;text-shadow:0 1px 2px #4016002e}
+@media(max-width:650px){.fryer-journal-overlay{padding:0}.fryer-journal-panel{border-radius:22px 22px 0 0;width:100%;max-height:92dvh;margin-top:auto;padding:19px}.fryer-journal-btn{margin-left:7px;padding:12px 15px;font-size:13px}.fryer-date-badge{font-size:9px;padding:3px 5px}}
