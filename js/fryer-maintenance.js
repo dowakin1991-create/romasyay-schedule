@@ -1,139 +1,124 @@
-import { getFirestore, doc, getDoc, collection, query, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-import { firebaseApp } from './store.js?v=20261111.bindingfix';
-import { currentUser, isAdmin } from './auth.js?v=20261111.rolefix';
-
-const db=getFirestore(firebaseApp), $=id=>document.getElementById(id);
-const months=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
-const monthsTitle=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
-const week=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
-let workerLinked=false,workerTicket=0,access=false,month='',unsubscribeMonth=null,unsubscribeHistory=null,ticket=0,entries={},loaded=false,selectedDay=null,saving=false;
-const entry=x=>({oilChanged:x?.oilChanged===true,note:typeof x?.note==='string'?x.note:'',performedBy:typeof x?.performedBy==='string'?x.performedBy:typeof x?.oilPerformedBy==='string'?x.oilPerformedBy:'',performedUid:typeof x?.performedUid==='string'?x.performedUid:''});
-const monthKey=()=>window.romasyayCurrentMonth?.()||'';
-const dateKey=(y,m,d)=>y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-const today=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t)?.value;return part('year')+'-'+part('month')+'-'+part('day')};
-async function updateWorkerAccess(){
- const token=++workerTicket,user=currentUser();workerLinked=false;
- if(!access||!user||isAdmin(user))return;
- try{
-  const link=await getDoc(doc(db,'teamAccess',user.uid));
-  const employeeId=link.data()?.employeeId;
-  if(!employeeId)return;
-  const record=await getDoc(doc(db,'employeeAccess',String(employeeId)));
-  if(token!==workerTicket||currentUser()?.uid!==user.uid)return;
-  workerLinked=record.data()?.uid===user.uid;
-  if(selectedDay)updateDialog();
- }catch{workerLinked=false}
-}
-function userLabel(user){return String(user?.displayName?.trim()||user?.email?.split('@')[0]||'Працівник').slice(0,80)}
-async function workerDisplayName(user,key){
-  let name=userLabel(user);
-  try{
-    const access=await getDoc(doc(db,'teamAccess',user.uid));
-    const id=access.data()?.employeeId;
-    if(id){
-      const schedule=await getDoc(doc(db,'schedules',key));
-      const record=(schedule.data()?.employees||[]).find(e=>String(e.id)===String(id));
-      if(record?.name?.trim())name=String(record.name.trim()).slice(0,80);
-    }
-  }catch{/* Keep a stable account label when roster is unavailable. */}
-  return name;
-}
-function close(){selectedDay=null;$('fryer-editor').hidden=true}
-function reset(){ticket++;unsubscribeMonth?.();unsubscribeHistory?.();unsubscribeMonth=unsubscribeHistory=null;entries={};loaded=false;close();$('fryer-history-list').replaceChildren()}
-function watch(){
- const next=monthKey();if(!access||!/^20\d\d-(0[1-9]|1[0-2])$/.test(next)){reset();return}
- if(next===month&&unsubscribeMonth)return;
- reset();month=next;const id=++ticket;
- $('fryer-status').textContent='Завантажуємо календар…';
- const history=query(collection(db,'fryerMaintenance',month,'history'),orderBy('createdAt','desc'),limit(100));
- unsubscribeHistory=onSnapshot(history,snap=>{if(id===ticket)renderHistory(snap.docs)},error=>{
- if(id===ticket)$('fryer-history-status').textContent='Не вдалося завантажити журнал: '+(error?.code||'помилка');
- });
- unsubscribeMonth=onSnapshot(doc(db,'fryerMaintenance',month),snap=>{
- if(id!==ticket)return;entries=snap.data()?.days||{};loaded=true;$('fryer-status').textContent='Дані актуальні';render();if(selectedDay)updateDialog();
- },error=>{if(id===ticket){loaded=false;$('fryer-status').textContent='Помилка завантаження: '+(error?.code||'невідома');render()}});
- render();
-}
+import {getFirestore,doc,getDoc,collection,query,orderBy,limit,onSnapshot,runTransaction,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import {firebaseApp} from './store.js?v=20261111.bindingfix';
+import {currentUser} from './auth.js?v=20261111.rolefix';
+const db=getFirestore(firebaseApp),$=id=>document.getElementById(id);
+const monthNames=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Грудень'];
+const entry=e=>({oilChanged:e?.oilChanged===true,note:e?.note||'',performedBy:e?.performedBy||e?.oilPerformedBy||''});
+const kyiv=()=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const a=k=>p.find(x=>x.type===k)?.value;return a('year')+'-'+a('month')+'-'+a('day')};
+let month='',access=false,records={},loaded=false,eligible=false,employeeName='',activeUid='',off=null,offHistory=null,version=0,busy=false;
+const panel=$('fryer-view'),editor=$('fryer-editor');
+function closeEditor(){editor.hidden=true}
+function close(){closeEditor();panel.hidden=true;document.body.classList.remove('fryer-journal-open')}
+function clear(){version++;off?.();offHistory?.();off=offHistory=null;loaded=false;records={};eligible=false;close()}
 function render(){
- const grid=$('fryer-calendar');grid.replaceChildren();
- const [year,m]=month.split('-').map(Number);if(!year||!m)return;
- $('fryer-month').textContent=monthsTitle[m-1]+' '+year;
- let count=0;
- for(let day=1;day<=new Date(year,m,0).getDate();day++){
-  const e=entry(entries[String(day)]);if(e.oilChanged)count++;
-  const btn=document.createElement('button');btn.type='button';btn.className='fryer-day'+(e.oilChanged?' is-oil':'');btn.disabled=!loaded;
-  btn.setAttribute('aria-label',day+' '+months[m-1]+': '+(e.oilChanged?'олію замінено':'заміни не позначено'));
-  const num=document.createElement('span');num.className='fryer-day-num';num.textContent=day;
-  const wk=document.createElement('small');wk.textContent=week[new Date(year,m-1,day).getDay()];
-  const mark=document.createElement('span');mark.className='fryer-day-marks';mark.textContent=e.oilChanged?'🛢️':e.note?'•':'';
-  btn.append(num,wk,mark);btn.addEventListener('click',()=>open(day));grid.append(btn);
+ if(!month)return;
+ const [y,m]=month.split('-').map(Number);
+ $('fryer-month').textContent=monthNames[m-1]+' '+y;
+ const list=$('fryer-journal-entries');list.replaceChildren();
+ const items=Object.entries(records).filter(([d,r])=>Number(d)>0&&entry(r).oilChanged).sort((a,b)=>Number(b[0])-Number(a[0]));
+ $('fryer-oil-total').textContent=items.length;
+ if(!items.length){const el=document.createElement('p');el.className='fryer-empty';el.textContent='За цей місяць замін олії ще немає.';list.append(el)}
+ for(const [day,data] of items){
+  const e=entry(data),row=document.createElement('div');row.className='fryer-journal-entry';
+  const symbol=document.createElement('span');symbol.className='fryer-entry-symbol';symbol.textContent='🛢';
+  const info=document.createElement('div'),title=document.createElement('strong'),note=document.createElement('p');
+  title.textContent=String(day).padStart(2,'0')+'.'+month.slice(5)+'.'+y+' — '+(e.performedBy||'виконавець не зазначений');
+  note.textContent=e.note||'Заміну олії виконано';
+  info.append(title,note);row.append(symbol,info);list.append(row)
  }
- $('fryer-oil-total').textContent=count;
+ eligibility();
 }
-function open(day){if(!loaded)return;selectedDay=day;updateDialog();$('fryer-editor').hidden=false}
-function updateDialog(){
- const day=selectedDay;if(!day)return;
- const [year,m]=month.split('-').map(Number),e=entry(entries[String(day)]);
- const canCreate=workerLinked&&dateKey(year,m,day)===today()&&!e.oilChanged&&!!currentUser();
- $('fryer-editor-title').textContent=day+' '+months[m-1]+' '+year;
- $('fryer-performer-label').textContent=e.oilChanged?'Заміну виконав(ла): '+(e.performedBy||'в старому записі не зазначено'):'Заміна олії не позначена';
- $('fryer-oil').checked=e.oilChanged;
- $('fryer-note').value=e.note;
- $('fryer-editor-fields').disabled=!canCreate;
- $('fryer-save').hidden=!canCreate;
- $('fryer-save').disabled=!canCreate||saving;
- $('fryer-editor-readonly').hidden=canCreate;
- $('fryer-editor-message').textContent='';
-}
-function renderHistory(records){
+function renderHistory(docs){
  const list=$('fryer-history-list');list.replaceChildren();
- $('fryer-history-status').textContent=records.length?'Записів: '+records.length+'.':'Історія ще порожня; старі дії відновити неможливо.';
- for(const record of records){
-  const a=record.data(),before=entry(a.before),after=entry(a.after);
+ $('fryer-history-status').textContent=docs.length?'Записів у журналі: '+docs.length:'Історія змін поки порожня.';
+ for(const item of docs){
+  const a=item.data(),prev=entry(a.before),next=entry(a.after);
   const li=document.createElement('li');li.className='fryer-history-item';
-  const top=document.createElement('div');top.className='fryer-history-top';
-  const date=document.createElement('strong');date.textContent=String(a.dayKey||'?')+'.'+month.slice(5)+'.'+month.slice(0,4);
-  const at=document.createElement('time'),t=a.createdAt?.toDate?.();at.textContent=t?t.toLocaleString('uk-UA'):'Час уточнюється';top.append(date,at);
-  const actor=document.createElement('p');actor.className='fryer-history-author';actor.textContent='Вніс/виправив: '+(a.actorName||'Користувач')+' · UID '+String(a.actorUid||'').slice(0,7)+'…';
-  const changes=document.createElement('ul');changes.className='fryer-history-changes';
-  const lines=[];
-  if(before.oilChanged!==after.oilChanged)lines.push(after.oilChanged?'🛢️ Позначено заміну олії':'🛢️ Позначку знято');
-  if(before.performedBy!==after.performedBy&&after.oilChanged)lines.push('Виконавець: '+(after.performedBy||'не вказано'));
-  if(before.note!==after.note)lines.push('Примітка: '+(after.note||'прибрана'));
-  if(!lines.length)lines.push('Виправлено попередній запис');
-  for(const line of lines){const item=document.createElement('li');item.textContent=line;changes.append(item)}
-  li.append(top,actor,changes);list.append(li);
+  const title=document.createElement('div');title.className='fryer-history-top';
+  const day=document.createElement('strong');day.textContent=String(a.dayKey||'?')+'.'+month.slice(5)+'.'+month.slice(0,4);
+  const kind=document.createElement('span');kind.textContent=prev.oilChanged===next.oilChanged?'Виправлення':next.oilChanged?'Замінено':'Скасовано';
+  title.append(day,kind);
+  const who=document.createElement('p');who.className='fryer-history-author';who.textContent='Запис змінив: '+(a.actorName||'Користувач');
+  const detail=document.createElement('p');detail.textContent=next.oilChanged?'Замінив: '+(next.performedBy||'не зазначено')+(next.note?' · '+next.note:''):'Позначку скасовано';
+  li.append(title,who,detail);list.append(li)
  }
 }
-async function save(ev){
- ev.preventDefault();if(!access||!workerLinked||saving||!selectedDay)return;
- const user=currentUser();if(!user)return;
- const day=selectedDay,key=month,[year,m]=key.split('-').map(Number);
- if(dateKey(year,m,day)!==today()){$('fryer-editor-message').textContent='Працівник може внести заміну лише сьогодні.';return}
- if(!$('fryer-oil').checked){$('fryer-editor-message').textContent='Позначте заміну олії.';return}
- const note=$('fryer-note').value.trim();
- const ref=doc(db,'fryerMaintenance',key),auditRef=doc(collection(db,'fryerMaintenance',key,'history'));
- saving=true;$('fryer-save').disabled=true;
- const actorName=await workerDisplayName(user,key);
- try{
-  const result=await runTransaction(db,async tx=>{
-    const snap=await tx.get(ref),data=snap.data()||{},days={...(data.days||{})};
-    if(entry(days[String(day)]).oilChanged)throw new Error('Запис уже існує. Зверніться до адміністратора для виправлення.');
-    const before=days[String(day)]||{};
-    const after={oilChanged:true,note,performedBy:actorName,performedUid:user.uid};
-    days[String(day)]=after;
-    tx.set(ref,{days,lastAuditId:auditRef.id,updatedAt:serverTimestamp()});
-    tx.set(auditRef,{dayKey:String(day),actorUid:user.uid,actorName,createdAt:serverTimestamp(),before,after});
-    return true;
-  });
-  if(result){close();$('fryer-status').textContent='Заміну олії збережено.'}
- }catch(error){$('fryer-editor-message').textContent='Не вдалося зберегти: '+(error?.message||error?.code||'помилка')}
- finally{saving=false;$('fryer-save').disabled=false}
+function eligibility(){
+ const day=Number(kyiv().slice(8)),sameMonth=month===kyiv().slice(0,7),done=sameMonth&&entry(records[String(day)]).oilChanged;
+ const button=$('fryer-start');button.disabled=!access||!loaded||!eligible||!sameMonth||done||busy;
+ $('fryer-journal-eligibility').textContent=!loaded?'Завантаження…':!sameMonth?'Позначати заміну можна тільки за сьогодні.':done?'Заміну за сьогодні вже внесено. Виправлення — через адміністратора.':eligible?'Ви сьогодні на зміні — можна зафіксувати заміну.':'Позначку може поставити тільки працівник, який сьогодні на зміні.';
 }
+async function checkShift(){
+ const token=++version,user=currentUser();eligible=false;employeeName='';activeUid='';eligibility();
+ if(!user||!access||!loaded)return;
+ try{
+  const team=await getDoc(doc(db,'teamAccess',user.uid)),id=team.data()?.employeeId;
+  if(!id)return;
+  const [person,schedule,absent]=await Promise.all([
+    getDoc(doc(db,'employeeAccess',String(id))),
+    getDoc(doc(db,'schedules',month)),
+    getDoc(doc(db,'availability',month,'employees',String(id)))
+  ]);
+  if(token!==version||person.data()?.uid!==user.uid)return;
+  const e=(schedule.data()?.employees||[]).find(x=>String(x.id)===String(id));
+  const day=Number(kyiv().slice(8));
+  const shifts=[...(e?.shifts||[]),...(e?.shiftsFirst||[]),...(e?.shiftsSecond||[])].map(Number);
+  const unavailable=(absent.exists()?absent.data().days:e?.unavail||[]).map(Number);
+  if(month!==kyiv().slice(0,7)||!shifts.includes(day)||unavailable.includes(day))return;
+  eligible=true;activeUid=user.uid;employeeName=String(e.name||user.displayName||'Працівник').slice(0,80);
+ }catch(e){console.warn('Fryer shift:',e.code||e.message)}
+ if(token===version)eligibility();
+}
+function watch(){
+ const target=window.romasyayCurrentMonth?.();
+ if(!access||!/^20\d\d-(0[1-9]|1[0-2])$/.test(target||''))return;
+ if(off&&month===target)return;
+ clear();month=target;const ticket=++version;
+ $('fryer-status').textContent='Завантажуємо журнал…';
+ off=onSnapshot(doc(db,'fryerMaintenance',month),snap=>{
+  if(ticket>version)return;records=snap.data()?.days||{};loaded=true;
+  $('fryer-status').textContent='Дані актуальні';render();void checkShift();
+ },e=>{$('fryer-status').textContent='Помилка: '+(e.code||e.message)});
+ offHistory=onSnapshot(query(collection(db,'fryerMaintenance',month,'history'),orderBy('createdAt','desc'),limit(100)),
+  snap=>renderHistory(snap.docs),e=>{$('fryer-history-status').textContent='Журнал недоступний: '+(e.code||e.message)});
+}
+function open(){if(!access)return;panel.hidden=false;document.body.classList.add('fryer-journal-open');watch();void checkShift()}
+function start(){
+ if(!eligible||!loaded||month!==kyiv().slice(0,7)||entry(records[String(Number(kyiv().slice(8)))]).oilChanged)return;
+ $('fryer-editor-title').textContent='Підтвердити заміну олії — '+kyiv().split('-').reverse().join('.');
+ $('fryer-performer-label').textContent='Виконавець: '+employeeName;
+ $('fryer-note').value='';$('fryer-editor-message').textContent='';editor.hidden=false;
+}
+async function save(event){
+ event.preventDefault();
+ if(!eligible||busy||!currentUser())return;
+ const date=kyiv(),m=date.slice(0,7),day=String(Number(date.slice(8)));
+ if(m!==month)return;
+ busy=true;$('fryer-save').disabled=true;
+ try{
+  const uid=currentUser().uid,performer=employeeName,note=$('fryer-note').value.trim();
+  const ref=doc(db,'fryerMaintenance',m),history=doc(collection(db,'fryerMaintenance',m,'history'));
+  await runTransaction(db,async tx=>{
+   const snap=await tx.get(ref),days={...(snap.data()?.days||{})};
+   if(days[day])throw Error('Уже є запис за цю дату. Зверніться до адміністратора.');
+   const after={oilChanged:true,performedBy:performer,performedUid:uid,note};
+   days[day]=after;
+   tx.set(ref,{days,lastAuditId:history.id,updatedAt:serverTimestamp()});
+   tx.set(history,{dayKey:day,actorUid:uid,actorName:performer,createdAt:serverTimestamp(),before:{},after});
+  });
+  closeEditor();
+ }catch(e){$('fryer-editor-message').textContent='Не вдалося зберегти: '+(e.message||e.code||'помилка')}
+ finally{busy=false;$('fryer-save').disabled=false;eligibility()}
+}
+$('fryer-journal-close').addEventListener('click',close);
+$('fryer-journal-scrim').addEventListener('click',close);
+$('fryer-start').addEventListener('click',start);
+$('fryer-cancel').addEventListener('click',closeEditor);
 $('fryer-form').addEventListener('submit',save);
-$('fryer-cancel').addEventListener('click',close);
-$('fryer-editor').addEventListener('click',e=>{if(e.target===$('fryer-editor'))close()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+editor.addEventListener('click',e=>{if(e.target===editor)closeEditor()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!editor.hidden)closeEditor();else close()}});
+window.addEventListener('romasyay:open-fryer',open);
+window.addEventListener('romasyay:open-fryer-day',open);
 window.addEventListener('romasyay:month-change',()=>{if(access)watch()});
-window.addEventListener('romasyay:access-change',e=>{access=e.detail?.allowed===true;if(!access){workerTicket++;workerLinked=false;reset();month=''}else {watch();void updateWorkerAccess()}});
-if(!$('private-schedule').hidden){access=true;watch();void updateWorkerAccess()}
+window.addEventListener('romasyay:access-change',e=>{access=e.detail?.allowed===true;if(access)watch();else{clear();month=''}});
+if(!$('private-schedule').hidden){access=true;watch()}
