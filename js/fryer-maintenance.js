@@ -2,7 +2,7 @@ import {getFirestore,doc,getDoc,collection,query,orderBy,limit,onSnapshot,runTra
 import {firebaseApp} from './store.js?v=20261111.bindingfix';
 import {currentUser} from './auth.js?v=20261111.rolefix';
 const db=getFirestore(firebaseApp),$=id=>document.getElementById(id);
-const monthNames=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Грудень'];
+const monthNames=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 const entry=e=>({oilChanged:e?.oilChanged===true,note:e?.note||'',performedBy:e?.performedBy||e?.oilPerformedBy||''});
 const kyiv=()=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const a=k=>p.find(x=>x.type===k)?.value;return a('year')+'-'+a('month')+'-'+a('day')};
 let month='',access=false,records={},loaded=false,eligible=false,employeeName='',activeUid='',off=null,offHistory=null,version=0,watchRevision=0,busy=false;
@@ -80,7 +80,7 @@ function watch(){
   $('fryer-status').textContent='Дані актуальні';render();void checkShift();
  },e=>{$('fryer-status').textContent='Помилка: '+(e.code||e.message)});
  offHistory=onSnapshot(query(collection(db,'fryerMaintenance',month,'history'),orderBy('createdAt','desc'),limit(100)),
-  snap=>{if(ticket===watchRevision)renderHistory(snap.docs)},e=>{$('fryer-history-status').textContent='Журнал недоступний: '+(e.code||e.message)});
+  snap=>{if(ticket===watchRevision)renderHistory(snap.docs)},e=>{$('fryer-history-status').textContent=e.code==='permission-denied'?'Firebase забороняє читання історії. Опублікуйте актуальні firestore.rules у Firebase → Firestore → Rules.':'Журнал недоступний: '+(e.code||e.message)});
 }
 function open(){if(!access)return;panel.hidden=false;document.body.classList.add('fryer-journal-open');watch();void checkShift()}
 function start(){
