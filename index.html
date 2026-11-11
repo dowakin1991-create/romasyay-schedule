@@ -166,7 +166,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/romasyay-icon.svg">
 <meta name="theme-color" content="#173e3a">
-<script>try{const t=localStorage.getItem('romasyay.schedule.theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch{document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<script>document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.style.colorScheme=document.documentElement.dataset.theme;</script>
 <link rel="stylesheet" href="assets/romasyay-themes.css?v=20261111.1">
 <link rel="stylesheet" href="assets/fryer-maintenance.css?v=20261111.premium3">
 </head>
@@ -348,7 +348,7 @@
 </div>
 
 <script type="module" src="js/legacy-ui.js?v=20261111.premium3"></script>
-<script type="module" src="js/theme-switch.js?v=20261111.1"></script>
+<script type="module" src="js/theme-switch.js?v=20261111.system4"></script>
 <script type="module" src="js/fryer-maintenance.js?v=20261111.premium3"></script>
 <script type="module" src="js/fryer-badges.js?v=20261111.premium3"></script></body>
 </html>
