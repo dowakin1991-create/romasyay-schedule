@@ -1,16 +1,29 @@
 import { getFirestore, doc, getDoc, collection, query, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { firebaseApp } from './store.js?v=20261111.bindingfix';
-import { currentUser } from './auth.js?v=20261111.rolefix';
+import { currentUser, isAdmin } from './auth.js?v=20261111.rolefix';
 
 const db=getFirestore(firebaseApp), $=id=>document.getElementById(id);
 const months=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
 const monthsTitle=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 const week=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
-let access=false,month='',unsubscribeMonth=null,unsubscribeHistory=null,ticket=0,entries={},loaded=false,selectedDay=null,saving=false;
+let workerLinked=false,workerTicket=0,access=false,month='',unsubscribeMonth=null,unsubscribeHistory=null,ticket=0,entries={},loaded=false,selectedDay=null,saving=false;
 const entry=x=>({oilChanged:x?.oilChanged===true,note:typeof x?.note==='string'?x.note:'',performedBy:typeof x?.performedBy==='string'?x.performedBy:typeof x?.oilPerformedBy==='string'?x.oilPerformedBy:'',performedUid:typeof x?.performedUid==='string'?x.performedUid:''});
 const monthKey=()=>window.romasyayCurrentMonth?.()||'';
 const dateKey=(y,m,d)=>y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 const today=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t)?.value;return part('year')+'-'+part('month')+'-'+part('day')};
+async function updateWorkerAccess(){
+ const token=++workerTicket,user=currentUser();workerLinked=false;
+ if(!access||!user||isAdmin(user))return;
+ try{
+  const link=await getDoc(doc(db,'teamAccess',user.uid));
+  const employeeId=link.data()?.employeeId;
+  if(!employeeId)return;
+  const record=await getDoc(doc(db,'employeeAccess',String(employeeId)));
+  if(token!==workerTicket||currentUser()?.uid!==user.uid)return;
+  workerLinked=record.data()?.uid===user.uid;
+  if(selectedDay)updateDialog();
+ }catch{workerLinked=false}
+}
 function userLabel(user){return String(user?.displayName?.trim()||user?.email?.split('@')[0]||'Працівник').slice(0,80)}
 async function workerDisplayName(user,key){
   let name=userLabel(user);
@@ -61,7 +74,7 @@ function open(day){if(!loaded)return;selectedDay=day;updateDialog();$('fryer-edi
 function updateDialog(){
  const day=selectedDay;if(!day)return;
  const [year,m]=month.split('-').map(Number),e=entry(entries[String(day)]);
- const canCreate=dateKey(year,m,day)===today()&&!e.oilChanged&&!!currentUser();
+ const canCreate=workerLinked&&dateKey(year,m,day)===today()&&!e.oilChanged&&!!currentUser();
  $('fryer-editor-title').textContent=day+' '+months[m-1]+' '+year;
  $('fryer-performer-label').textContent=e.oilChanged?'Заміну виконав(ла): '+(e.performedBy||'в старому записі не зазначено'):'Заміна олії не позначена';
  $('fryer-oil').checked=e.oilChanged;
@@ -93,7 +106,7 @@ function renderHistory(records){
  }
 }
 async function save(ev){
- ev.preventDefault();if(!access||saving||!selectedDay)return;
+ ev.preventDefault();if(!access||!workerLinked||saving||!selectedDay)return;
  const user=currentUser();if(!user)return;
  const day=selectedDay,key=month,[year,m]=key.split('-').map(Number);
  if(dateKey(year,m,day)!==today()){$('fryer-editor-message').textContent='Працівник може внести заміну лише сьогодні.';return}
@@ -122,5 +135,5 @@ $('fryer-cancel').addEventListener('click',close);
 $('fryer-editor').addEventListener('click',e=>{if(e.target===$('fryer-editor'))close()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
 window.addEventListener('romasyay:month-change',()=>{if(access)watch()});
-window.addEventListener('romasyay:access-change',e=>{access=e.detail?.allowed===true;if(!access){reset();month=''}else watch()});
-if(!$('private-schedule').hidden){access=true;watch()}
+window.addEventListener('romasyay:access-change',e=>{access=e.detail?.allowed===true;if(!access){workerTicket++;workerLinked=false;reset();month=''}else {watch();void updateWorkerAccess()}});
+if(!$('private-schedule').hidden){access=true;watch();void updateWorkerAccess()}
