@@ -122,6 +122,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/teamAccess/$(request.auth.uid)).data.employeeId is string
         && get(/databases/$(database)/documents/employeeAccess/$(get(/databases/$(database)/documents/teamAccess/$(request.auth.uid)).data.employeeId)).data.uid == request.auth.uid;
     }
+    function workerFryerOnShift(month, dayKey) {
+      let employeeId = get(/databases/$(database)/documents/teamAccess/$(request.auth.uid)).data.employeeId;
+      let roster = get(/databases/$(database)/documents/schedules/$(month)).data.get('fryerShiftDays', {});
+      let absentPath = /databases/$(database)/documents/availability/$(month)/employees/$(employeeId);
+      return roster.get(employeeId, []).hasAny([int(dayKey)])
+        && (!exists(absentPath) || !get(absentPath).data.get('days', []).hasAny([int(dayKey)]));
+    }
     function workerFryerToday(month, dayKey) {
       let now = fryerToday();
       return month == string(now.year()) + '-' + (now.month() < 10 ? '0' : '') + string(now.month())
@@ -130,6 +137,7 @@ service cloud.firestore {
     function workerFryerChange(month, audit, oldDays) {
       return workerFryerAllowed()
         && workerFryerToday(month, audit.dayKey)
+        && workerFryerOnShift(month, audit.dayKey)
         && oldDays.get(audit.dayKey, {}) == {}
         && audit.after.keys().hasOnly(['oilChanged','note','performedBy','performedUid'])
         && audit.after.oilChanged == true
