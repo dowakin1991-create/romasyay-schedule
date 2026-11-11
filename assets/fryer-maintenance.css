@@ -29,3 +29,10 @@
 .fryer-dialog-actions button{border-radius:11px;min-height:44px;padding:9px 16px;border:1px solid var(--border);background:var(--control);color:var(--text-main);font-weight:700}
 .fryer-dialog-actions #fryer-save{background:var(--brand-accent,var(--primary));color:var(--brand-contrast,#fff);border:0}
 @media(max-width:600px){.fryer-calendar{gap:4px}.fryer-day{min-height:69px;padding:5px 1px}.fryer-day-num{font-size:15px}.fryer-day-marks{font-size:12px}.worker-tabs button{min-width:0;font-size:clamp(10px,2.7vw,13px);padding-inline:4px}}
+
+/* Optional, account-wide fryer notifications. */
+.fryer-push-pref{padding:12px 14px;margin:12px 0 16px;border:1px solid var(--border);border-radius:14px;background:var(--control)}
+.fryer-push-pref label{display:flex;align-items:center;gap:10px;font-weight:700;line-height:1.35;cursor:pointer}
+.fryer-push-pref input[type=checkbox]{flex:none;width:22px;height:22px;min-height:22px;accent-color:var(--brand-accent,var(--primary))}
+.fryer-push-pref p{font-size:13px;margin:7px 0 0}
+#fryer-push-feedback:not(:empty){padding:9px 12px;border-radius:10px;background:var(--control);border:1px solid var(--border);font-size:13px}
