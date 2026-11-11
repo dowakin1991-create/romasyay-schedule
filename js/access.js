@@ -1,6 +1,6 @@
 import { getFirestore, doc, onSnapshot, collection, getDocs, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-import { firebaseApp } from './store.js?v=20261029.soho1';
-import { isOwner } from './auth.js?v=20261019.8';
+import { firebaseApp } from './store.js?v=20261111.bindingfix';
+import { isOwner } from './auth.js?v=20261111.rolefix';
 const db=getFirestore(firebaseApp);
 export async function registerViewer(uid) {
   if (!uid) throw Error('Увійдіть до акаунта.');
