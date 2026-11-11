@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'; img-src 'none'">
+<meta name="robots" content="noindex,nofollow">
+<title>Ромасяй Графік — ключ Web Push</title>
+<style>
+:root{color-scheme:dark}body{font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:#13100e;color:#f9f0e5;max-width:660px;margin:auto;padding:24px 18px}
+h1{font-size:1.6rem}p{margin:13px 0}button,textarea,input{box-sizing:border-box;width:100%;font:inherit;border-radius:12px;padding:12px;margin:7px 0}
+button{cursor:pointer;background:#ed822c;color:#221308;font-weight:700;border:0;min-height:48px}button:disabled{opacity:.55}
+textarea,input{background:#231d18;color:#fff4e5;border:1px solid #67513d}
+textarea{min-height:160px;resize:vertical;overflow-wrap:anywhere}
+label{display:block;font-weight:700;margin-top:14px}.help{color:#dac2aa;font-size:.92rem}
+.warning{border:1px solid #966c37;background:#302316;padding:12px;border-radius:12px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<h1>🔔 Ромасяй Графік — VAPID-ключі</h1>
+<p>Ключі генеруються <strong>лише у твоєму браузері</strong> засобами Web Crypto. Ця сторінка не надсилає їх на сервер і не зберігає після закриття.</p>
+<p class="warning">Згенеруй одну пару лише для «Ромасяй Графік». Не використовуй ключі «Кабінету». Після запуску push не створюй нову пару без необхідності: старі підписки перестануть працювати.</p>
+<button id="generate" type="button">Створити ключі</button>
+<div id="result" hidden>
+<label for="secret">1. Секрет Cloudflare: <code>VAPID_JSON</code></label>
+<textarea id="secret" readonly spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+<button id="copy-secret" type="button">Скопіювати VAPID_JSON</button>
+<p class="help">Cloudflare → Worker <strong>romasyay-schedule-push</strong> → Settings → Runtime variables and secrets → Add variable. Назва <code>VAPID_JSON</code>, позначка <strong>Secret</strong>, Production. Встав текст із поля вище у Value, потім натисни «Add variable and deploy». <strong>Не надсилай секрет у чат і не додавай до GitHub.</strong></p>
+<label for="public">2. Публічний ключ (можна надіслати в чат)</label>
+<input id="public" readonly spellcheck="false">
+<button id="copy-public" type="button">Скопіювати публічний ключ</button>
+<p class="help">Цей ключ знадобиться для перевірки конфігурації. Приватний ключ публікувати не можна.</p>
+</div>
+<p id="status" role="status" aria-live="polite"></p>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const base64url=bytes=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+async function copy(input){
+ try{await navigator.clipboard.writeText(input.value);$('status').textContent='Скопійовано.';}
+ catch{$('status').textContent='Автоматичне копіювання недоступне. Виділи текст і скопіюй вручну.';input.focus();input.select();}
+}
+$('generate').addEventListener('click',async()=>{
+ $('generate').disabled=true;$('status').textContent='Створюємо пару ключів…';
+ try{
+  if(!crypto?.subtle)throw Error('Web Crypto недоступний: відкрий сторінку через HTTPS.');
+  const pair=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
+  const jwk=await crypto.subtle.exportKey('jwk',pair.privateKey);
+  const bytes=new Uint8Array(await crypto.subtle.exportKey('raw',pair.publicKey));
+  const pub=base64url(bytes);
+  if(bytes.length!==65||!jwk.d||!jwk.x||!jwk.y)throw Error('Некоректні ключі.');
+  $('secret').value=JSON.stringify({subject:'mailto:dowakin1991@gmail.com',publicKey:pub,privateKey:jwk.d});
+  $('public').value=pub;
+  $('result').hidden=false;$('status').textContent='Готово. Збережи секрет у Cloudflare; не закривай сторінку, поки не завершиш.';
+ }catch(e){$('status').textContent='Помилка: '+e.message;$('generate').disabled=false;}
+});
+$('copy-secret').addEventListener('click',()=>copy($('secret')));
+$('copy-public').addEventListener('click',()=>copy($('public')));
+</script>
+</body>
+</html>
