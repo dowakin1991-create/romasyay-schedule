@@ -25,7 +25,8 @@ const monthNames = ['Січень','Лютий','Березень','Квітен
 const dayNames = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
 let todayDate = new Date();
 const notificationTarget = (()=>{try{const url=new URL(location.href),month=url.searchParams.get('month'),day=Number(url.searchParams.get('day')),endDay=Number(url.searchParams.get('endDay')),rawDays=url.searchParams.get('days');if(/^20\d\d-(0[1-9]|1[0-2])$/.test(month||'')&&Number.isInteger(day)&&day>0&&day<=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate())return{month,day,endDay:Number.isInteger(endDay)&&endDay>=day&&endDay<=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate()?endDay:day,days:rawDays&&/^\d{1,2}(,\d{1,2})*$/.test(rawDays)?rawDays.split(',').map(Number).filter(d=>d>=1&&d<=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate()):null};}catch{}return null;})();
-let currentDate = notificationTarget ? new Date(Number(notificationTarget.month.slice(0,4)),Number(notificationTarget.month.slice(5,7))-1,1) : new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+const fryerNotificationMonth=(()=>{try{const u=new URL(location.href),m=u.searchParams.get('month');return u.searchParams.get('section')==='fryer'&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(m||'')?m:null}catch{return null}})();
+let currentDate = notificationTarget ? new Date(Number(notificationTarget.month.slice(0,4)),Number(notificationTarget.month.slice(5,7))-1,1) : fryerNotificationMonth ? new Date(Number(fryerNotificationMonth.slice(0,4)),Number(fryerNotificationMonth.slice(5,7))-1,1) : new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
 let employees = [], banquets = {}, unsubscribe = null, generation = 0;
 let stopViewerAccess=null,stopApprovalAccess=null,viewerMode=false;
 let stopTeamAccess = null, accessGeneration = 0, boundEmployeeId = null;
@@ -563,6 +564,7 @@ if (admin) {
       $('private-schedule').hidden=!access;
       window.dispatchEvent(new CustomEvent('romasyay:access-change',{detail:{allowed:access}}));
       if(!access)window.showScheduleView();
+      else if(fryerNotificationMonth)window.showFryerView();
       $('viewer-export').hidden=!access || !viewerMode;
       $('redDotToggleBtn').hidden=viewerMode;
       $('personal-tab').hidden=viewerMode;
