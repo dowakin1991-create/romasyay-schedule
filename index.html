@@ -168,7 +168,7 @@
 <meta name="theme-color" content="#173e3a">
 <script>try{const t=localStorage.getItem('romasyay.schedule.theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch{document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
 <link rel="stylesheet" href="assets/romasyay-themes.css?v=20261111.1">
-<link rel="stylesheet" href="assets/fryer-maintenance.css?v=20261111.simple1">
+<link rel="stylesheet" href="assets/fryer-maintenance.css?v=20261111.inline2">
 </head>
 <body data-page="index">
 <div class="container">
@@ -236,7 +236,7 @@
     <div id="private-schedule" hidden>
     <nav class="worker-tabs" aria-label="Розділи кабінету">
       <button id="schedule-tab" type="button" aria-pressed="true" onclick="showScheduleView()">Графік</button>
-      <button id="fryer-tab" type="button" aria-pressed="false" onclick="showFryerView()">Фритюр</button>
+
       <button id="personal-tab" type="button" aria-pressed="false" onclick="showPersonalView()">Мій кабінет</button>
     </nav>
     <section id="schedule-view">
@@ -244,6 +244,7 @@
     <button id="redDotToggleBtn" class="mode-btn off" onclick="toggleRedDotMode()">
         🔴 Поставити вихідний
     </button>
+    <button id="fryer-journal-open" class="fryer-journal-btn" type="button" onclick="showFryerView()">🛢️ Фритюр</button>
 
     <div class="table-wrapper">
         <table id="schedule">
@@ -262,37 +263,33 @@
         </div>
     </div>
     </section>
-    <section id="fryer-view" class="fryer-view" hidden aria-labelledby="fryer-heading">
-  <article class="fryer-card">
-    <h2 id="fryer-heading">🛢️ Графік заміни олії у фритюрі</h2>
-    <p>Позначайте фактичну заміну олії лише в день її виконання. Для виправлень і записів заднім числом зверніться до адміністратора.</p>
-    <strong id="fryer-month"></strong>
-    <div class="fryer-stats"><span class="fryer-stat">🛢️ Замін олії: <strong id="fryer-oil-total">0</strong></span></div>
-    <p id="fryer-status" role="status">Завантажуємо…</p>
-    <div id="fryer-calendar" class="fryer-calendar" aria-label="Календар замін олії"></div>
-    <p class="fryer-help">Натисніть дату, щоб переглянути виконавця і примітку. Новий запис звичайний працівник може створити лише сьогодні.</p>
-  </article>
-  <article class="fryer-card fryer-history-card">
-    <div class="fryer-history-heading"><div><h2>Історія замін олії</h2><p>Хто створив або виправив запис, дата та зміст змін.</p></div><span class="fryer-history-limit">Останні 100 дій за місяць</span></div>
-    <p id="fryer-history-status" role="status" aria-live="polite">Завантажуємо журнал…</p>
-    <ol id="fryer-history-list" class="fryer-history-list" aria-label="Журнал заміни олії"></ol>
+    <section id="fryer-view" class="fryer-journal-overlay" hidden aria-labelledby="fryer-heading">
+  <div class="fryer-journal-scrim" id="fryer-journal-scrim"></div>
+  <article class="fryer-journal-panel" role="dialog" aria-modal="true" aria-labelledby="fryer-heading">
+    <div class="fryer-journal-top"><div><span class="fryer-journal-eyebrow">РОМАСЯЙ · КОНТРОЛЬ ЯКОСТІ</span>
+      <h2 id="fryer-heading">🛢️ Журнал заміни олії</h2><p>Фактичні заміни, відповідальні працівники та примітки.</p></div>
+      <button id="fryer-journal-close" type="button" aria-label="Закрити журнал">✕</button></div>
+    <p id="fryer-month" class="fryer-journal-month"></p><p id="fryer-status" role="status">Завантажуємо…</p>
+    <div class="fryer-journal-summary"><strong id="fryer-oil-total">0</strong><span>замін олії цього місяця</span></div>
+    <div id="fryer-journal-entries" class="fryer-journal-entries"></div>
+    <div class="fryer-journal-submit"><p id="fryer-journal-eligibility" role="status"></p>
+      <button id="fryer-start" type="button" disabled>🛢️ Позначити заміну олії сьогодні</button></div>
+    <div class="fryer-history-section"><h3>Історія змін</h3>
+      <p id="fryer-history-status" role="status" aria-live="polite">Завантажуємо історію…</p>
+      <ol id="fryer-history-list" class="fryer-history-list"></ol></div>
   </article>
 </section>
 <section id="fryer-editor" class="fryer-editor" hidden>
- <form id="fryer-form" class="fryer-dialog" role="dialog" aria-modal="true" aria-labelledby="fryer-editor-title">
-   <h3 id="fryer-editor-title"></h3>
-   <p id="fryer-performer-label" class="fryer-view-performer"></p>
-   <fieldset id="fryer-editor-fields">
-     <label><input id="fryer-oil" type="checkbox"> 🛢️ Олію замінено</label>
-     <label class="fryer-note-label">Примітка<textarea id="fryer-note" maxlength="250" placeholder="Наприклад, замінено олію в лівому фритюрі"></textarea></label>
-   </fieldset>
-   <p id="fryer-editor-readonly" hidden>Перегляд запису. Зміни за інші дати та виправлення виконує адміністратор.</p>
-   <p id="fryer-editor-message" role="status"></p>
-   <div class="fryer-dialog-actions">
-     <button id="fryer-cancel" type="button">Закрити</button>
-     <button id="fryer-save" type="submit">Зберегти</button>
-   </div>
- </form>
+  <form id="fryer-form" class="fryer-dialog" role="dialog" aria-modal="true" aria-labelledby="fryer-editor-title">
+    <h3 id="fryer-editor-title">Підтвердити заміну олії</h3>
+    <p id="fryer-performer-label"></p>
+    <fieldset id="fryer-editor-fields"><label class="fryer-note-label">Примітка (необов’язково)
+      <textarea id="fryer-note" maxlength="250" placeholder="Наприклад, замінено олію в лівому фритюрі"></textarea>
+    </label></fieldset>
+    <p id="fryer-editor-message" role="status"></p>
+    <div class="fryer-dialog-actions"><button id="fryer-cancel" type="button">Скасувати</button>
+      <button id="fryer-save" type="submit">Підтвердити заміну</button></div>
+  </form>
 </section>
 <section id="personal-view" class="personal-view" hidden aria-labelledby="personal-heading">
       <article class="personal-card">
@@ -350,6 +347,6 @@
 
 <script type="module" src="js/legacy-ui.js?v=20261111.binding2"></script>
 <script type="module" src="js/theme-switch.js?v=20261111.1"></script>
-<script type="module" src="js/fryer-maintenance.js?v=20261111.simple1"></script>
-</body>
+<script type="module" src="js/fryer-maintenance.js?v=20261111.inline2"></script>
+<script type="module" src="js/fryer-badges.js?v=20261111.inline1"></script></body>
 </html>
