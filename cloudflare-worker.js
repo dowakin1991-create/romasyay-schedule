@@ -160,6 +160,32 @@ async function handler(name,user,data,env){
   if(entry?.uid===user.uid)await kv.delete(key);
   return reply({ok:true});
  }
+ if(name==='fryerPreference'){
+  if(!await canReceive(user))return err('permission-denied','Немає доступу до графіка',403);
+  const key='pref:fryer:'+user.uid;
+  if(data.enabled===undefined)return reply({enabled:(await kv.get(key))==='yes'});
+  if(typeof data.enabled!=='boolean')return err('invalid-argument','Некоректне налаштування');
+  if(data.enabled)await kv.put(key,'yes');else await kv.delete(key);
+  return reply({enabled:data.enabled});
+ }
+ if(name==='pushFryer'){
+  if(!await isAdmin(user))return err('permission-denied','Лише власник або шеф може надсилати зміни фритюра',403);
+  const month=data.month,notice=data.notice;
+  if(typeof month!=='string'||!/^20\d\d-(0[1-9]|1[0-2])$/.test(month)||
+   !notice||!Number.isInteger(notice.day)||
+   notice.day<1||notice.day>new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate()||
+   !['cleaned','oil','both','updated','removed'].includes(notice.kind))return err('invalid-argument','Некоректні дані фритюра');
+  config(env);
+  const keys=await subscriptions(kv);
+  const selected=[];
+  for(const key of keys){
+   const sub=await kv.get(key,'json');
+   if(sub?.uid&&(await kv.get('pref:fryer:'+sub.uid))==='yes')selected.push(key);
+  }
+  const jobId=crypto.randomUUID();
+  await kv.put('job:'+jobId,JSON.stringify({by:user.uid,keys:selected,month,notice,category:'fryer',at:Date.now()}),{expirationTtl:900});
+  return reply({jobId,total:selected.length});
+ }
  if(name==='pushSchedule'){
   if(!await isAdmin(user))return err('permission-denied','Доступ лише власнику або шефу',403);
   if(!validNotices(data.month,data.notices))return err('invalid-argument','Некоректні дати сповіщень');
@@ -175,8 +201,9 @@ async function handler(name,user,data,env){
   if(!job||job.by!==user.uid||Date.now()-job.at>900000)return err('not-found','Завдання недоступне',404);
   const key=job.keys[data.index];if(!key)return err('invalid-argument','Невірний номер');
   const sub=await kv.get(key,'json');if(!sub)return reply({accepted:0,failed:0,removed:0,skipped:1});
+  if(job.category==='fryer'&&(await kv.get('pref:fryer:'+sub.uid))!=='yes')return reply({accepted:0,failed:0,removed:0,skipped:1});
   try{
-   const res=await deliver(sub.subscription,{month:job.month,notices:job.notices},config(env));
+   const res=await deliver(sub.subscription,job.category==='fryer'?{category:'fryer',month:job.month,notice:job.notice}:{month:job.month,notices:job.notices},config(env));
    if(res.status===404||res.status===410){await kv.delete(key);return reply({accepted:0,failed:0,removed:1})}
    return reply({accepted:res.ok?1:0,failed:res.ok?0:1,removed:0,diagnostic:res.ok?'':'push-http-'+res.status});
   }catch{return reply({accepted:0,failed:1,removed:0,diagnostic:'push-network-error'})}
@@ -211,7 +238,7 @@ export default {
   if(req.method!=='POST')return err('not-found','Потрібен POST',404);
   if(origin!==ORIGIN)return err('permission-denied','Недозволене джерело',403);
   const name=new URL(req.url).pathname.replace(/^\/+|\/+$/g,'');
-  if(!['pushConfig','pushSubscribe','pushUnsubscribe','pushSchedule','pushDeliver','accountAlert'].includes(name))return err('not-found','Маршрут не існує',404);
+  if(!['pushConfig','pushSubscribe','pushUnsubscribe','pushSchedule','pushDeliver','accountAlert','fryerPreference','pushFryer'].includes(name))return err('not-found','Маршрут не існує',404);
   if(Number(req.headers.get('content-length')||0)>30000)return err('invalid-argument','Запит завеликий',413);
   try{
    const user=await identity(req);
