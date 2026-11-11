@@ -88,10 +88,19 @@ service cloud.firestore {
     function fryerDayOk(dayKey) {
       return dayKey is string && dayKey.matches('([1-9]|[12][0-9]|3[01])');
     }
+    function kyivSummerTime() {
+      let m = request.time.month();
+      let d = request.time.day();
+      let w = request.time.dayOfWeek();
+      let passed = d - (w == 7 ? 0 : w) >= 25;
+      let beforeSwitch = w == 7 && request.time.hours() < 1;
+      // Europe/Kyiv changes offset on the final Sunday in March/October at 01:00 UTC.
+      return (m > 3 && m < 10)
+        || (m == 3 && passed && !beforeSwitch)
+        || (m == 10 && (!passed || beforeSwitch));
+    }
     function fryerToday() {
-      // Ukraine UTC+2 winter, UTC+3 summer. Transition-night edge cases
-      // should be verified with emulators; server time prevents clock spoofing.
-      return request.time + duration.value(request.time.month() >= 4 && request.time.month() <= 9 ? 3 : 2, 'h');
+      return request.time + duration.value(kyivSummerTime() ? 3 : 2, 'h');
     }
     function validFryerEntry(entry) {
       return entry is map
