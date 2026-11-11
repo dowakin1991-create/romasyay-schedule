@@ -1,0 +1,188 @@
+/* Readable glass surfaces; the schedule keeps opaque cells and its semantic colors. */
+:root {
+  color-scheme: light dark;
+  --glass: rgba(255,255,255,.8);
+  --glass-solid: #f7fafb;
+  --glass-line: rgba(255,255,255,.9);
+  --glass-shadow: 0 12px 36px rgba(24,65,76,.09), inset 0 1px 0 rgba(255,255,255,.85);
+  --control: rgba(255,255,255,.88);
+  --muted: #506271;
+  --text-main: #172e3a;
+  --border: #b9cbd1;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: radial-gradient(ellipse at 0 0, #c8e9e6 0, transparent 48%), radial-gradient(ellipse at 100% 35%, #dbe5f9 0, transparent 50%), #edf3f5;
+  background-attachment: fixed;
+  min-height:100dvh; box-sizing:border-box;
+  padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  -webkit-tap-highlight-color:transparent;
+}
+header, .admin-controls, .account-panel, .modal-content, .receipt-viewer {
+  background:var(--glass-solid);
+  border:1px solid var(--glass-line);
+  border-radius:24px;
+  box-shadow:var(--glass-shadow);
+}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  header, .admin-controls, .account-panel, .modal-content, .receipt-viewer {
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(22px) saturate(135%);
+    backdrop-filter:blur(22px) saturate(135%);
+  }
+}
+header { padding:16px; gap:12px; flex-wrap:nowrap; }
+.logo-block { flex:none; }
+.logo-block > div { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.logo { height:48px; width:48px; border:2px solid #fff; box-shadow:0 3px 12px #173b3b25; }
+.admin-badge { display:inline-block; padding:4px 9px; border-radius:20px; background:#176267; color:#fff; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.admin-badge[data-role="owner"] { background:#695023; color:#fff8e9; }
+.month-selector { min-width:0; gap:6px; }
+#month-label { font-size:clamp(.95rem,3.7vw,1.2rem) !important; min-width:0 !important; flex:1; }
+button, .account-control, .account-panel button, .receipt-viewer .button { border-radius:14px; min-height:44px; font-family:inherit; font-weight:650; }
+.nav-btn { padding:0; width:40px; min-width:40px; height:40px; min-height:40px; border-radius:50%; background:var(--control); border:1px solid var(--border); color:var(--text-main); font-size:1.1rem; }
+.account-control, .account-panel button, .receipt-viewer .button { background:var(--control); color:var(--text-main); border:1px solid var(--border); }
+.admin-controls { padding:14px; gap:10px; }
+.input-group { min-width:0; width:100%; gap:10px; }
+input, #login-form input, .account-panel input { min-width:0; min-height:46px; box-sizing:border-box; border-radius:14px; background:var(--control); border:1px solid var(--border); color:var(--text-main); font-size:16px; }
+input::placeholder { color:var(--muted); opacity:1; }
+.add-btn { background:#176c7b; }
+.export-btn { background:#705197; }
+.tg-btn { background:#12698d; }
+.add-btn, .export-btn, .tg-btn { color:#fff; box-shadow:inset 0 1px 0 #ffffff28,0 3px 8px #173b3b14; }
+.mode-btn.off { background:var(--glass); color:var(--text-main); border:1px solid var(--border); border-radius:18px; box-shadow:var(--glass-shadow); }
+.mode-btn.on { background:#b93232; animation:none; border-radius:18px; }
+#connection-status, .hint-text { color:var(--muted); }
+#connection-status { margin:8px 4px 12px; font-size:.78rem; }
+.account-panel { padding:16px; margin:12px 0; }
+.account-panel summary { min-height:28px; line-height:1.5; font-size:.95rem; }
+.account-panel p { line-height:1.55; }
+#owner-panel { margin:0 0 12px; }
+#owner-panel summary { font-weight:700; cursor:pointer; }
+#owner-panel > p { color:var(--muted); font-size:.85rem; }
+.table-wrapper { background:var(--bg-card); border:1px solid var(--border); border-radius:20px; box-sizing:border-box; box-shadow:0 8px 24px #173b3b12; }
+table { font-variant-numeric:tabular-nums; }
+th { font-weight:700; }
+.modal-overlay { background:rgba(13,27,36,.5); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
+.modal-content { padding:22px; }
+button:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline:3px solid #218ba5; outline-offset:3px; }
+.row-order-controls button { border-radius:9px; background:var(--control); }
+@media (prefers-color-scheme:dark) {
+  :root { --glass:rgba(29,42,50,.87); --glass-solid:#1d2a32; --glass-line:rgba(205,234,245,.19); --glass-shadow:0 14px 36px #0004,inset 0 1px 0 #ffffff12; --control:rgba(39,55,65,.95); --muted:#b6c7cf; --text-main:#f0f6fa; --border:#516570; }
+  body { background:radial-gradient(ellipse at 0 0,#173e42 0,transparent 48%),radial-gradient(ellipse at 100% 35%,#24344d 0,transparent 50%),#10191f; background-attachment:fixed; }
+  .admin-badge[data-role="owner"] { background:#785d2d; }
+  .admin-badge { background:#206c72; }
+  .add-btn { background:#206779; } .export-btn { background:#68508e; } .tg-btn { background:#176783; }
+}
+@media (prefers-reduced-transparency:reduce) {
+  header, .admin-controls, .account-panel, .modal-content, .receipt-viewer, .mode-btn.off { background:var(--glass-solid); -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .modal-overlay { -webkit-backdrop-filter:none; backdrop-filter:none; }
+}
+@media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+@media (max-width:380px) { header { padding:12px; gap:7px; } .nav-btn { min-width:34px; width:34px; } .admin-controls { padding:10px; } .add-btn { padding:10px; } }
+
+.auth-gate { max-width:460px; margin:28px auto; padding:clamp(20px,5vw,32px); }
+.auth-gate h1 { font-size:1.55rem; margin:0 0 14px; letter-spacing:-.03em; overflow-wrap:anywhere; }
+.auth-gate .account-forms { display:block; }
+.auth-gate form > button[type="submit"] { width:100%; background:#176267; color:white; border-color:#176267; }
+.account-panel .text-button { display:inline; min-height:0; padding:0; margin:0; border:0; background:none; color:var(--primary); text-decoration:underline; }
+.remember-label { display:flex !important; gap:9px; align-items:center; margin:16px 0 !important; }
+.account-panel .remember-label input { width:20px; height:20px; min-height:20px; margin:0; flex:none; }
+.auth-divider { display:flex; align-items:center; gap:12px; margin:16px 0; color:var(--muted); }
+.auth-divider::before,.auth-divider::after { content:''; height:1px; flex:1; background:var(--border); }
+.account-panel .social-button { width:100%; margin:5px 0; }
+.auth-note { font-size:.78rem !important; color:var(--muted); }
+
+.push-panel { margin: 14px 0; }
+.push-panel p { line-height: 1.5; color: var(--text-main); }
+.push-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.push-actions button { min-height:44px; }
+
+/* Compact account controls keep the schedule above the fold. */
+#account-panel:not(.auth-gate), .push-panel { padding:0; border-radius:18px; margin:8px 0; overflow:hidden; }
+.profile-summary, .push-panel > summary { display:flex; align-items:center; gap:12px; list-style:none; cursor:pointer; padding:12px 14px; min-height:48px; box-sizing:border-box; }
+.profile-summary::-webkit-details-marker, .push-panel > summary::-webkit-details-marker { display:none; }
+.profile-icon { display:grid; place-items:center; width:36px; height:36px; flex:none; border-radius:12px; background:#176c7b; color:white; font-size:24px; }
+.profile-heading { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+#account-summary { font-size:15px; font-weight:750; line-height:1.3; overflow-wrap:anywhere; }
+#profile-hint { font-size:12px; color:var(--muted); font-weight:400; }
+.disclosure-arrow { margin-left:auto; color:var(--muted); font-size:20px; flex:none; transition:transform .15s; }
+details[open] > summary .disclosure-arrow { transform:rotate(180deg); }
+#account-panel:not(.auth-gate) > :not(summary) { margin-left:14px; margin-right:14px; }
+#account-panel:not(.auth-gate) p { font-size:13px; margin-top:10px; margin-bottom:10px; }
+.account-email { overflow-wrap:anywhere; color:var(--muted); }
+#account-panel p:empty { display:none; }
+#account-signed { padding-bottom:14px; }
+#account-signed button, #account-signed a { font-size:13px; padding:10px 12px; margin:4px 4px 0 0; }
+#account-signed a { display:inline-block; }
+#account-signed [hidden] { display:none !important; }
+#worker-logout { color:#a83232; }
+.push-panel > summary { font-size:14px; font-weight:650; gap:8px; }
+.push-summary-state { margin-left:auto; color:var(--muted); font-size:12px; font-weight:500; }
+.push-panel .disclosure-arrow { margin-left:0; }
+.push-panel > p, .push-panel > .push-actions { margin:0 14px 14px; font-size:13px; }
+.push-actions { gap:8px; align-items:center; }
+.push-actions button { font-size:13px; padding:10px 12px; }
+.push-panel .text-button { min-height:44px; }
+.auth-gate > .profile-summary { padding:0 0 8px; }
+.auth-gate #account-summary { font-size:22px; }
+.auth-gate .profile-icon, .auth-gate .disclosure-arrow { display:none; }
+body[data-page="index"] header { padding:12px 14px; border-radius:20px; margin-bottom:8px; }
+body[data-page="index"] .logo { width:40px; height:40px; }
+body[data-page="index"] #connection-status { margin:6px 4px 8px; font-size:11px; }
+body[data-page="index"] .mode-btn { margin-top:10px; margin-bottom:12px; padding:12px; font-size:14px; min-height:44px; }
+@media (min-width:760px) { #account-panel:not(.auth-gate), .push-panel { max-width:620px; } }
+
+.worker-tabs { display:flex; gap:6px; padding:5px; margin:14px 0; border:1px solid var(--border); border-radius:16px; background:color-mix(in srgb,var(--bg-card) 82%,transparent); }
+.worker-tabs button { flex:1; min-height:44px; border:0; border-radius:12px; background:transparent; color:var(--text-main); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+.worker-tabs button[aria-pressed="true"] { color:#fff; background:#176c7b; box-shadow:0 2px 8px #173b3b20; }
+.personal-view { display:grid; gap:14px; }
+.personal-card { min-width:0; padding:clamp(16px,4vw,24px); border:1px solid var(--border); border-radius:22px; background:var(--bg-card); box-shadow:0 8px 24px #173b3b10; }
+.personal-card h2,.personal-card h3 { margin:0 0 12px; }
+.personal-eyebrow { margin:0 0 10px; color:var(--muted); font-size:11px; font-weight:750; letter-spacing:.08em; }
+.personal-total { display:flex; align-items:baseline; gap:10px; margin:14px 0 4px; }
+.personal-total strong { color:#176c7b; font-size:clamp(42px,12vw,66px); line-height:1; font-variant-numeric:tabular-nums; }
+.personal-total span,.personal-breakdown { color:var(--muted); }
+.personal-chart { display:flex; align-items:stretch; gap:3px; min-height:130px; overflow-x:auto; padding:12px 2px 4px; overscroll-behavior-x:contain; }
+.personal-bar-column { display:flex; flex:1 0 12px; flex-direction:column; align-items:center; justify-content:flex-end; gap:5px; min-width:10px; }
+.personal-bar { width:min(100%,16px); height:var(--bar-height); min-height:3px; border-radius:5px 5px 2px 2px; background:var(--border); }
+.personal-bar.is-work { background:linear-gradient(180deg,#46a9a6,#176c7b); }
+.personal-bar-column small { color:var(--muted); font-size:9px; line-height:1; }
+.personal-legend { display:flex; flex-wrap:wrap; gap:8px 14px; color:var(--muted); font-size:11px; }
+.notification-focus { position:relative; z-index:2; outline:4px solid #a5ee32 !important; box-shadow:inset 0 0 0 2px #a5ee32,0 0 0 3px #a5ee3280!important; outline-offset:-3px; animation:notify-pulse 1s ease-in-out 3; }
+@keyframes notify-pulse { 50% { filter:brightness(1.12); } }
+@media (max-width:760px) and (pointer:coarse) {
+  body { background-attachment:scroll !important; }
+  .modal-overlay,.account-panel,.personal-card,.table-wrapper,header { -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .modal-overlay { background:rgba(12,22,28,.62); }
+  .personal-card,.table-wrapper,header { box-shadow:0 4px 14px #173b3b0c; }
+  th,td { transition:none; }
+  .mode-btn,.worker-tabs button,.nav-btn,button { touch-action:manipulation; }
+  .personal-chart { contain:layout paint; }
+}
+
+/* Refined compact iOS-style controls; existing Romasyay palette is preserved. */
+body{ -webkit-tap-highlight-color:transparent; }
+button,summary,a,input,select{touch-action:manipulation}
+button:focus-visible,summary:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #85cbbb;outline-offset:2px}
+.account-panel,.table-wrapper,.admin-controls,header{border-radius:22px}
+button,.account-panel summary{transition:background-color .18s ease,box-shadow .18s ease,transform .16s ease}
+button:active{transform:scale(.975)}
+@media(max-width:600px){body{padding:8px}.container{max-width:100%}header{gap:8px}.table-wrapper{overscroll-behavior-x:contain}th,td{font-variant-numeric:tabular-nums}}
+/* The event keeps its amber/pink header, while the date itself is visibly red. */
+th.event-day-th .day-number{display:inline-flex;align-items:center;justify-content:center;min-width:27px;height:29px;border-radius:9px;background:#d92d42;color:#fff!important;padding:0 3px;margin-bottom:2px;box-shadow:0 2px 5px #0002}
+th.event-day-th.current-day-th{background:var(--banquet-th-bg)!important}
+th.event-day-th.cleaning-th.current-day-th{background:var(--cleaning-head)!important}
+th.event-day-th .cleaning-label{font-size:.53rem;white-space:nowrap;letter-spacing:-.03em;padding:3px 1px}
+th.event-day-th .banquet-label{white-space:nowrap}
+.notification-focus{border-color:#a5ee32!important}
+@media(prefers-reduced-motion:reduce){.notification-focus{animation:none}}
+
+/* Continuous red outline marks TODAY throughout the entire schedule column. */
+#schedule th.current-day-th,#admin-table th.current-day-th{border-left:3px solid #f04438!important;border-right:3px solid #f04438!important;border-top:3px solid #f04438!important;box-shadow:inset 2px 0 0 #f04438,inset -2px 0 0 #f04438;position:sticky}
+#schedule td.current-day-td,#admin-table td.current-day-td{border-left:3px solid #f04438!important;border-right:3px solid #f04438!important;box-shadow:inset 1px 0 0 #f04438,inset -1px 0 0 #f04438}
+#schedule td.current-day-td-bottom,#admin-table td.current-day-td-bottom{border-bottom:4px solid #f04438!important}
+#schedule th.current-day-th.event-day-th,#admin-table th.current-day-th.event-day-th{border-top:4px solid #f04438!important}
+
+/* Prevent iOS auto-zoom when focusing form fields; keep table scrolling intact. */
+@media (pointer:coarse){input,textarea,select{font-size:16px!important}}
