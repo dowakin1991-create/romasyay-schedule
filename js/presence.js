@@ -1,6 +1,6 @@
 import {getFirestore,doc,setDoc,collection,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-import {firebaseApp} from './store.js?v=20261029.soho1';
-import {watchAuth,isOwner} from './auth.js?v=20261019.8';
+import {firebaseApp} from './store.js?v=20261111.bindingfix';
+import {watchAuth,isOwner} from './auth.js?v=20261111.rolefix';
 
 const db=getFirestore(firebaseApp);
 export const presenceOnline = timestamp => !!timestamp && Date.now()-timestamp.toMillis()<150000;
