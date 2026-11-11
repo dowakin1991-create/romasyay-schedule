@@ -166,6 +166,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/romasyay-icon.svg">
 <meta name="theme-color" content="#173e3a">
+<script>try{const t=localStorage.getItem('romasyay.schedule.theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch{document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="assets/romasyay-themes.css?v=20261111.1">
 </head>
 <body data-page="index">
 <div class="container">
@@ -313,5 +315,6 @@
 </div>
 
 <script type="module" src="js/legacy-ui.js?v=20261110.rollback1"></script>
+<script type="module" src="js/theme-switch.js?v=20261111.1"></script>
 </body>
 </html>
