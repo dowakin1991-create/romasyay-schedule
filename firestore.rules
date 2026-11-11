@@ -80,16 +80,66 @@ service cloud.firestore {
             && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80));
       allow delete: if false;
     }
-    // Isolated fryer-maintenance records. Never stored in schedules/{month}.
+    // Atomic, append-only fryer audit. Client edits must create their matching history event.
+    function fryerMonthOk(month) {
+      return month.matches('20[0-9][0-9]-(0[1-9]|1[0-2])');
+    }
+    function fryerDayOk(dayKey) {
+      return dayKey is string && dayKey.matches('([1-9]|[12][0-9]|3[01])');
+    }
+    function validFryerEntry(entry) {
+      return entry is map
+        && entry.keys().hasOnly(['cleaned', 'oilChanged', 'note'])
+        && entry.cleaned is bool && entry.oilChanged is bool
+        && entry.note is string && entry.note.size() <= 250;
+    }
+    function fryerPair(month) {
+      let auditId = request.resource.data.lastAuditId;
+      let audit = getAfter(/databases/$(database)/documents/fryerMaintenance/$(month)/history/$(auditId)).data;
+      let oldDays = resource == null ? {} : resource.data.days;
+      return auditId is string && auditId.size() == 20
+        && (resource == null || auditId != resource.data.get('lastAuditId', ''))
+        && audit.actorUid == request.auth.uid
+        && audit.createdAt == request.time
+        && fryerDayOk(audit.dayKey)
+        && audit.before == oldDays.get(audit.dayKey, {})
+        && audit.after == request.resource.data.days.get(audit.dayKey, {})
+        && oldDays.diff(request.resource.data.days).affectedKeys().hasOnly([audit.dayKey]);
+    }
     match /fryerMaintenance/{month} {
       allow read: if canReadSchedule();
-      allow create, update: if isAdmin()
-        && month.matches('20[0-9][0-9]-(0[1-9]|1[0-2])')
-        && request.resource.data.keys().hasOnly(['days', 'updatedAt'])
+      allow create, update: if isAdmin() && fryerMonthOk(month)
+        && request.resource.data.keys().hasOnly(['days', 'updatedAt', 'lastAuditId'])
+        && request.resource.data.keys().hasAll(['days', 'updatedAt', 'lastAuditId'])
         && request.resource.data.days is map
         && request.resource.data.days.size() <= 31
-        && request.resource.data.updatedAt == request.time;
-      allow delete: if isOwner();
+        && request.resource.data.updatedAt == request.time
+        && fryerPair(month);
+      // The parent document is never deleted by a client: use a journalled correction.
+      allow delete: if false;
+      match /history/{auditId} {
+        allow get, list: if canReadSchedule();
+        allow create: if isAdmin() && fryerMonthOk(month)
+          && auditId.size() == 20
+          && request.resource.data.keys().hasOnly(['dayKey','actorUid','actorName','createdAt','before','after'])
+          && request.resource.data.keys().hasAll(['dayKey','actorUid','actorName','createdAt','before','after'])
+          && fryerDayOk(request.resource.data.dayKey)
+          && request.resource.data.actorUid == request.auth.uid
+          && request.resource.data.actorName is string
+          && request.resource.data.actorName.size() <= 80
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.before is map
+          && request.resource.data.after is map
+          && (request.resource.data.before == {} || validFryerEntry(request.resource.data.before))
+          && (request.resource.data.after == {} || validFryerEntry(request.resource.data.after))
+          && request.resource.data.before != request.resource.data.after
+          && getAfter(/databases/$(database)/documents/fryerMaintenance/$(month)).data.lastAuditId == auditId
+          && getAfter(/databases/$(database)/documents/fryerMaintenance/$(month)).data.days.get(request.resource.data.dayKey, {}) == request.resource.data.after
+          && (exists(/databases/$(database)/documents/fryerMaintenance/$(month))
+                ? get(/databases/$(database)/documents/fryerMaintenance/$(month)).data.days.get(request.resource.data.dayKey, {}) == request.resource.data.before
+                : request.resource.data.before == {});
+        allow update, delete: if false;
+      }
     }
     match /schedules/{month} {
       allow read: if canReadSchedule();
