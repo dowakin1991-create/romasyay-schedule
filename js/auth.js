@@ -1,4 +1,4 @@
-import { getAdminRole, watchAdminRole } from './roles.js?v=20261017.5';
+import { getAdminRole, watchAdminRole } from './roles.js?v=20261111.binding2';
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword,
   signOut, setPersistence, browserSessionPersistence, browserLocalPersistence,
