@@ -281,6 +281,17 @@
         <div id="fryer-calendar" class="fryer-calendar" aria-label="Календар фритюра"></div>
         <p class="fryer-help">Натисни дату для деталей. Власник або шеф може позначати прибирання, заміну олії та додавати примітки. Інші користувачі переглядають записи.</p>
       </article>
+      <article class="fryer-card fryer-history-card">
+        <div class="fryer-history-heading">
+          <div>
+            <h2>Історія обслуговування</h2>
+            <p>Хто вніс або виправив запис, що саме змінилося та коли це збережено.</p>
+          </div>
+          <span class="fryer-history-limit">Останні 100 дій за місяць</span>
+        </div>
+        <p id="fryer-history-status" role="status" aria-live="polite">Завантажуємо журнал…</p>
+        <ol id="fryer-history-list" class="fryer-history-list" aria-label="Історія змін фритюра"></ol>
+      </article>
     </section>
     <section id="fryer-editor" class="fryer-editor" hidden>
       <form id="fryer-form" class="fryer-dialog" role="dialog" aria-modal="true" aria-labelledby="fryer-editor-title">
@@ -356,6 +367,6 @@
 
 <script type="module" src="js/legacy-ui.js?v=20261111.fryer3"></script>
 <script type="module" src="js/theme-switch.js?v=20261111.1"></script>
-<script type="module" src="js/fryer-maintenance.js?v=20261111.notify1"></script>
+<script type="module" src="js/fryer-maintenance.js?v=20261111.audit1"></script>
 </body>
 </html>
