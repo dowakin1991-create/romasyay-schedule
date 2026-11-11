@@ -9,7 +9,26 @@ const monthNames=['Січень','Лютий','Березень','Квітень
 const weekday=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
 let access=false, month='', stop=null, stopHistory=null, ticket=0, entries={}, loaded=false, selectedDay=null, saving=false;
 const monthKey=()=>window.romasyayCurrentMonth?.()||'';
-const cleanEntry=value=>({cleaned:value?.cleaned===true,oilChanged:value?.oilChanged===true,note:typeof value?.note==='string'?value.note.slice(0,250):''});
+const cleanEntry=value=>({
+ cleaned:value?.cleaned===true,
+ oilChanged:value?.oilChanged===true,
+ note:typeof value?.note==='string'?value.note.slice(0,250):'',
+ oilPerformedBy:typeof value?.oilPerformedBy==='string'?value.oilPerformedBy.slice(0,80):'',
+ oilPerformedAt:typeof value?.oilPerformedAt==='string'?value.oilPerformedAt.slice(0,30):''
+});
+const localDatetime=value=>{
+ if(!value)return '';
+ const d=new Date(value);
+ if(!Number.isFinite(d.getTime()))return '';
+ const pad=n=>String(n).padStart(2,'0');
+ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+};
+function updateOilFields(){
+ const selected=$('fryer-oil').checked;
+ $('fryer-oil-details').hidden=!selected;
+ $('fryer-oil-by').disabled=!selected;
+ $('fryer-oil-at').disabled=!selected;
+}
 let preferenceTicket=0,preferenceBusy=false;
 const prefToggle=$('fryer-push-toggle'),prefStatus=$('fryer-push-pref-status');
 async function loadPreference(){
@@ -43,7 +62,7 @@ prefToggle.addEventListener('change',async()=>{
   }finally{preferenceBusy=false;prefToggle.disabled=!access}
 });
 function noticeKind(previous,next){
- if(previous.cleaned===next.cleaned&&previous.oilChanged===next.oilChanged&&previous.note===next.note)return null;
+ if(previous.cleaned===next.cleaned&&previous.oilChanged===next.oilChanged&&previous.note===next.note&&previous.oilPerformedBy===next.oilPerformedBy&&previous.oilPerformedAt===next.oilPerformedAt)return null;
  if(!next.cleaned&&!next.oilChanged&&!next.note)return 'removed';
  if(next.cleaned&&!previous.cleaned&&next.oilChanged&&!previous.oilChanged)return 'both';
  if(next.oilChanged&&!previous.oilChanged)return 'oil';
@@ -97,6 +116,18 @@ function renderHistory(records){
   for(const line of changes){const change=document.createElement('li');change.textContent=line;body.append(change)}
   if(before.note!==after.note&&after.note){const note=document.createElement('li');note.textContent='Нова примітка: '+after.note;body.append(note)}
   if(before.note!==after.note&&before.note){const note=document.createElement('li');note.textContent='Попередня примітка: '+before.note;body.append(note)}
+  if(after.oilChanged){
+    const op=document.createElement('li');
+    const when=after.oilPerformedAt?new Date(after.oilPerformedAt):null;
+    const whenText=when&&Number.isFinite(when.getTime())?when.toLocaleString('uk-UA',{dateStyle:'short',timeStyle:'short'}):'час не вказано';
+    op.textContent='Фактична заміна олії: '+(after.oilPerformedBy||'виконавця не вказано')+' · '+whenText;
+    body.append(op);
+  }
+  if(before.oilPerformedBy!==after.oilPerformedBy||before.oilPerformedAt!==after.oilPerformedAt){
+    const correction=document.createElement('li');
+    correction.textContent='Дані виконавця/часу заміни: '+(before.oilPerformedBy||'не вказано')+' → '+(after.oilPerformedBy||'не вказано');
+    body.append(correction);
+  }
   item.append(top,by,body);list.append(item);
  }
 }
@@ -168,6 +199,9 @@ function updateDialog(){
  $('fryer-cleaned').checked=entry.cleaned;
  $('fryer-oil').checked=entry.oilChanged;
  $('fryer-note').value=entry.note;
+ $('fryer-oil-by').value=entry.oilPerformedBy;
+ $('fryer-oil-at').value=localDatetime(entry.oilPerformedAt);
+ updateOilFields();
  const editable=isAdmin(currentUser());
  $('fryer-editor-readonly').hidden=editable;
  $('fryer-editor-fields').disabled=!editable;
@@ -178,26 +212,34 @@ function updateDialog(){
 async function save(event){
  event.preventDefault();if(!access||!selectedDay||saving||!isAdmin(currentUser()))return;
  const day=selectedDay,key=month,cleaned=$('fryer-cleaned').checked,oilChanged=$('fryer-oil').checked,note=$('fryer-note').value.trim();
- if(note.length>250){$('fryer-editor-message').textContent='Примітка: максимум 250 символів.';return}
+ const oilPerformedBy=oilChanged?$('fryer-oil-by').value.trim():'';
+ const localOilTime=oilChanged?$('fryer-oil-at').value:'';
+ const parsedOilTime=localOilTime?new Date(localOilTime):null;
+ const oilPerformedAt=oilChanged&&parsedOilTime&&Number.isFinite(parsedOilTime.getTime())?parsedOilTime.toISOString():'';
+ if(note.length>250||oilPerformedBy.length>80){$('fryer-editor-message').textContent='Перевір довжину примітки або імені виконавця.';return}
+ if(oilChanged&&localOilTime&&!oilPerformedAt){$('fryer-editor-message').textContent='Вказано некоректний час заміни олії.';return}
  const ref=doc(db,'fryerMaintenance',key);
  const auditRef=doc(collection(db,'fryerMaintenance',key,'history'));
  const actor=currentUser();
  const actorUid=actor?.uid;
  const actorName=(typeof actor?.displayName==='string'&&actor.displayName.trim()?actor.displayName.trim():'Користувач').slice(0,80);
- const after={cleaned,oilChanged,note};
+ const after={cleaned,oilChanged,note,oilPerformedBy,oilPerformedAt};
  saving=true;$('fryer-save').disabled=true;$('fryer-editor-message').textContent='Зберігаємо…';
  try{
   const result=await runTransaction(db,async tx=>{
    const snap=await tx.get(ref),data=snap.exists()?snap.data():{};
    const days={...(data.days&&typeof data.days==='object'?data.days:{})};
-   const before=cleanEntry(days[String(day)]);
-   if(before.cleaned===after.cleaned&&before.oilChanged===after.oilChanged&&before.note===after.note)return {before,changed:false};
+   const existing=days[String(day)];
+   const before=cleanEntry(existing);
+   if(!before.oilChanged&&after.oilChanged&&(!after.oilPerformedBy||!after.oilPerformedAt))
+     throw new Error('Вкажи виконавця та фактичний час нової заміни олії.');
+   if(before.cleaned===after.cleaned&&before.oilChanged===after.oilChanged&&before.note===after.note&&before.oilPerformedBy===after.oilPerformedBy&&before.oilPerformedAt===after.oilPerformedAt)return {before,changed:false};
    if(after.cleaned||after.oilChanged||after.note)days[String(day)]=after;
    else delete days[String(day)];
    tx.set(ref,{days,updatedAt:serverTimestamp(),lastAuditId:auditRef.id});
    tx.set(auditRef,{
      dayKey:String(day),actorUid,actorName,createdAt:serverTimestamp(),
-     before:(before.cleaned||before.oilChanged||before.note)?before:{},
+     before:existing&&typeof existing==='object'?existing:{},
      after:(after.cleaned||after.oilChanged||after.note)?after:{}
    });
    return {before,changed:true};
@@ -208,9 +250,17 @@ async function save(event){
   }
   if(key===month&&selectedDay===day)disableDialog();
   void sendFryerNotice(key,day,noticeKind(result.before,after));
- }catch(error){$('fryer-editor-message').textContent='Не вдалося зберегти: '+(error?.code||error.message)}
+ }catch(error){$('fryer-editor-message').textContent='Не вдалося зберегти: '+(error?.message||error?.code||'помилка')}
  finally{saving=false;$('fryer-save').disabled=false}
 }
+$('fryer-oil').addEventListener('change',()=>{
+ if($('fryer-oil').checked&&!$('fryer-oil-by').value&&!$('fryer-oil-at').value){
+   const user=currentUser();
+   $('fryer-oil-by').value=user?.displayName?.trim()||'';
+   $('fryer-oil-at').value=localDatetime(new Date().toISOString());
+ }
+ updateOilFields();
+});
 $('fryer-form').addEventListener('submit',save);
 $('fryer-cancel').addEventListener('click',disableDialog);
 $('fryer-editor').addEventListener('click',e=>{if(e.target===$('fryer-editor'))disableDialog()});
