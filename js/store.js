@@ -128,6 +128,23 @@ export function subscribeSchedule(id, onData, onError) {
   };
 }
 
+// Only an administrator may write this roster mirror. Firestore Rules use it to
+// authorize same-day fryer reports without trusting client-supplied shift claims.
+const fryerOnSiteDays = employee => [...new Set([...(employee.shifts||[]),...(employee.shiftsFirst||[]),...(employee.shiftsSecond||[])])].filter(n=>Number.isInteger(n)&&n>=1&&n<=31).sort((a,b)=>a-b);
+const fryerShiftRoster = employees => Object.fromEntries(employees.map(e=>[String(e.id),fryerOnSiteDays(e)]));
+export async function syncFryerShiftRoster(id) {
+ const ref=doc(db,'schedules',id);
+ return runTransaction(db,async tx=>{
+   const snap=await tx.get(ref);
+   if(!snap.exists())return false;
+   const expected=fryerShiftRoster(normalizeSchedule(snap.data()).employees);
+   const current=snap.data()?.fryerShiftDays||{};
+   if(JSON.stringify(current)===JSON.stringify(expected))return false;
+   tx.update(ref,{fryerShiftDays:expected});
+   return true;
+ });
+}
+
 export async function updateSchedule(id, mutate) {
   const reference = doc(db, "schedules", id);
   await runTransaction(db, async transaction => {
@@ -137,6 +154,7 @@ export async function updateSchedule(id, mutate) {
     transaction.set(reference, {
       employees: draft.employees,
       banquets: draft.banquets,
+      fryerShiftDays:fryerShiftRoster(draft.employees),
       schemaVersion: 2,
       updatedAt: serverTimestamp()
     });
