@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Ромасяй Графік</title>
+    
+    <link rel="icon" type="image/png" href="assets/romasyay-icon.svg">
+    <link rel="apple-touch-icon" href="assets/romasyay-icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Ромасяй Графік">
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f4f7f6; --bg-card: #ffffff; --text-main: #2c3e50;
+            --primary: #1F6B6B; --weekend: #e9ecef; --border: #c4cdd5;
+            --row-1: #fdf2f2; --row-2: #f0f7f4; --row-3: #fef6e3; --row-4: #f3f0f7; --row-5: #eef5fb;
+            --today-border: #e74c3c;
+            
+            --highlight-green-solid: #2ecc71; 
+            --highlight-green-bg: rgba(46, 204, 113, 0.3);
+            --highlight-green-sticky: #d5f5e3; 
+            
+            --highlight-blue-solid: #3498db; 
+            --highlight-blue-bg: rgba(52, 152, 219, 0.35); 
+            --highlight-blue-sticky: #d6eaf8;
+
+            --banquet-solid: #f39c12;
+            --banquet-bg: rgba(243, 156, 18, 0.15);
+            --banquet-th-bg: linear-gradient(135deg, #e67e22, #f39c12);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #121212; --bg-card: #1e1e1e; --text-main: #e0e0e0;
+                --primary: #2ebfbf; --weekend: #2a2a2a; --border: #444444;
+                --row-1: #3a2a2a; --row-2: #2a3a32; --row-3: #3a352a; --row-4: #2e2a3a; --row-5: #2a333a;
+                --today-border: #ff6b6b;
+                
+                --highlight-green-bg: rgba(46, 204, 113, 0.4); 
+                --highlight-green-sticky: #1d5233; 
+                
+                --highlight-blue-bg: rgba(52, 152, 219, 0.45); 
+                --highlight-blue-sticky: #1f4766; 
+
+                --banquet-bg: rgba(243, 156, 18, 0.25);
+                --banquet-th-bg: linear-gradient(135deg, #b95d09, #d68910);
+            }
+        }
+
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-body); color: var(--text-main); margin: 0; padding: 10px; transition: background-color 0.3s ease; -webkit-user-select: none; user-select: none; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; background: var(--bg-card); padding: 12px 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid var(--border); }
+        .logo { height: 42px; width: 42px; border-radius: 50%; background-color: #ffffff; padding: 2px; object-fit: contain; border: 2px solid var(--border); box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .month-selector { display: flex; align-items: center; justify-content: center; flex-grow: 1; }
+        .nav-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0 15px; color: var(--text-main); }
+        
+        .mode-btn { padding: 15px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .mode-btn.off { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); }
+        .mode-btn.on { background: #e74c3c; color: white; border: 1px solid #c0392b; animation: pulse 2s infinite; }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; background: var(--bg-card); border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; background: var(--bg-card); }
+        
+        th, td { padding: 4px; height: 50px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); box-sizing: border-box; transition: background-color 0.2s; }
+        th { border-top: 1px solid var(--border); background: var(--primary); color: white; position: sticky; top: 0; z-index: 4; font-size: 0.9rem; }
+        th.weekend { color: var(--text-main) !important; }
+        
+        th:first-child, td:first-child { 
+            position: sticky; left: 0; z-index: 5; box-shadow: 2px 0 5px rgba(0,0,0,0.05); 
+            text-align: left; padding-left: 10px; border-left: 1px solid var(--border); 
+            min-width: 100px; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+        }
+        th:first-child { z-index: 6; background: var(--primary); color: white !important; cursor: default; }
+
+        .current-day-th { border-top: 3px solid var(--today-border) !important; border-left: 3px solid var(--today-border) !important; border-right: 3px solid var(--today-border) !important; background-color: #1a5c5c !important; color: white !important; }
+        .current-day-td { border-left: 3px solid var(--today-border) !important; border-right: 3px solid var(--today-border) !important; background-color: rgba(231, 76, 60, 0.08) !important; }
+        .current-day-td-bottom { border-bottom: 3px solid var(--today-border) !important; }
+        
+        .highlight-col { background-color: var(--highlight-green-bg) !important; border-left: 2px solid var(--highlight-green-solid) !important; border-right: 2px solid var(--highlight-green-solid) !important;}
+        th.highlight-col { border-top: 2px solid var(--highlight-green-solid) !important; color: var(--text-main) !important;}
+        .highlight-name { background-color: var(--highlight-green-sticky) !important; border-left: 4px solid var(--highlight-green-solid) !important; }
+        .highlight-row td { background-color: var(--highlight-blue-bg) !important;}
+        .highlight-row td:first-child { background-color: var(--highlight-blue-sticky) !important; border-left: 4px solid var(--highlight-blue-solid) !important; }
+
+        .banquet-th { background: var(--banquet-th-bg) !important; color: white !important; border-top: 2px solid var(--banquet-solid) !important; border-left: 2px solid var(--banquet-solid) !important; border-right: 2px solid var(--banquet-solid) !important; }
+        .banquet-td { background-color: var(--banquet-bg) !important; border-left: 2px solid rgba(243, 156, 18, 0.4) !important; border-right: 2px solid rgba(243, 156, 18, 0.4) !important; }
+        .banquet-label { display: block; font-size: 0.55rem; background: #ffffff; color: #d35400; border-radius: 4px; padding: 2px; margin-top: 4px; font-weight: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+        .weekend { background-color: var(--weekend) !important; }
+        .unavailable { color: #ff4d4d; font-weight: 900; font-size: 1.5rem; line-height: 0; vertical-align: bottom; }
+        
+        tr:nth-child(5n+1) td:not(.current-day-td):not(.banquet-td) { background-color: var(--row-1); }
+        tr:nth-child(5n+2) td:not(.current-day-td):not(.banquet-td) { background-color: var(--row-2); }
+        tr:nth-child(5n+3) td:not(.current-day-td):not(.banquet-td) { background-color: var(--row-3); }
+        tr:nth-child(5n+4) td:not(.current-day-td):not(.banquet-td) { background-color: var(--row-4); }
+        tr:nth-child(5n+5) td:not(.current-day-td):not(.banquet-td) { background-color: var(--row-5); }
+        
+        .duty-text { font-size: 0.55rem; color: #f1c40f; font-weight: bold; display: block; margin-top: 3px; letter-spacing: 0.5px; }
+
+        .soho-count:not(:empty), .supra-count:not(:empty) { display:inline-flex; align-items:center; justify-content:center; border:2px solid; border-radius:4px; padding:1px 4px; font-size:.78em; font-weight:800; line-height:1.3; white-space:nowrap; box-sizing:border-box; }
+        .soho-count:not(:empty) { border-color:#e00018; color:#e00018; }
+        .supra-count:not(:empty) { border-color:#4fc3f7; color:#4fc3f7; }
+        .shift-stat-row { display:grid!important; grid-template-columns:minmax(0,1fr) 30px 43px 48px; align-items:center; column-gap:5px; margin:8px 0; }
+        .shift-stat-label { min-width:0; white-space:nowrap; font-size:clamp(.78rem,3vw,1rem); }
+        .shift-stat-row strong { text-align:center; font-variant-numeric:tabular-nums; }
+        .shift-stat-row .soho-count, .shift-stat-row .supra-count { margin:0; justify-self:center; }
+        .shift-stat-row .soho-count:not(:empty), .shift-stat-row .supra-count:not(:empty) { width:100%; }
+        .shift-soho { display:inline-block; background:#e00018; color:#090909; padding:5px 7px; font-size:10px; font-weight:900; line-height:1; white-space:nowrap; letter-spacing:0; vertical-align:middle; }
+        .personal-total .soho-count:not(:empty), .personal-total .supra-count:not(:empty) { margin-left:5px; }
+        .shift-supra { display:inline-block; background:#4fc3f7; color:#090909; padding:5px 5px; font-size:10px; font-weight:900; line-height:1; white-space:nowrap; letter-spacing:0; vertical-align:middle; }
+        .shift-icon { display: inline-block; width: 18px; height: 18px; background-color: var(--primary); vertical-align: middle; }
+        .shift-full { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4,4 L16,16 M16,4 L4,16' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4,4 L16,16 M16,4 L4,16' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain; }
+        .shift-first { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4,4 L10,10 M16,4 L5,18' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4,4 L10,10 M16,4 L5,18' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain; }
+        .shift-second { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M14,3 L5,18 M9.5,11 L16,17' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M14,3 L5,18 M9.5,11 L16,17' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain; }
+
+        .hint-text { font-size: 0.8rem; margin-top: 15px; color: #888; font-weight: 500; text-align: center; display: flex; flex-direction: column; gap: 8px;}
+        .hint-legend { display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--bg-card); padding: 20px; border-radius: 15px; width: 320px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; max-height: 90vh; overflow-y: auto; }
+        .modal-content h3 { margin: 0 0 10px 0; font-size: 1.2rem; color: var(--primary); }
+        .modal-content p { margin: 0 0 15px 0; font-size: 0.95rem; opacity: 0.9; line-height: 1.4; }
+        
+        .modal-btn { padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%; transition: opacity 0.2s; background: var(--bg-body); color: var(--text-main); }
+        .modal-btn:active { opacity: 0.7; }
+        .btn-confirm { background: #2ecc71; color: white; border: none; }
+        .btn-danger { background: #e74c3c; color: white; border: none; }
+        .btn-cancel { background: transparent; color: var(--text-main); text-decoration: underline; margin-top: 5px; border: none; }
+        .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+
+        .emp-stats { background: var(--bg-body); padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--border); text-align: left;}
+        .emp-stats p { margin: 8px 0; display: flex; justify-content: space-between; font-size: 1rem; font-weight: 500; opacity: 1; }
+        .emp-stats strong { color: #e74c3c; font-size: 1.2rem; }
+
+.profile-push-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.profile-push-row #account-panel{flex:1;min-width:0;margin:0}
+.profile-push-row #push-panel{flex:0 0 58px;min-width:58px;margin:0;padding:0;overflow:visible}
+.profile-push-row #push-panel[open]{flex:0 0 min(60vw,260px)}
+.profile-push-row #push-panel summary{display:flex;justify-content:center;align-items:center;min-height:72px;padding:8px!important;cursor:pointer;list-style:none}
+.profile-push-row #push-panel summary::-webkit-details-marker{display:none}
+.profile-push-row #push-panel[open]>:not(summary){padding:0 12px 12px}
+.profile-push-row #push-panel:not([open])>:not(summary){display:none}
+#push-bell-icon{font-size:27px;line-height:1}
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+     .viewer-export{display:flex;gap:8px;margin-bottom:12px}.viewer-export button{flex:1;border:1px solid var(--border);background:var(--primary);color:white;border-radius:12px;padding:12px;font-weight:700}.viewer-export[hidden]{display:none}
+    #admin-link.admin-open-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:10px 16px;border:1px solid #176f79;border-radius:13px;background:#177381;color:#fff;font-weight:750;text-decoration:none;box-sizing:border-box;box-shadow:none}#admin-link.admin-open-button[hidden]{display:none!important}#admin-link.admin-open-button:active{background:#115761}
+    </style>
+<link rel="stylesheet" href="responsive.css?v=20261110.2">
+<link rel="stylesheet" href="assets/legacy-extras.css?v=20261017.10">
+<link rel="stylesheet" href="assets/glass.css?v=20261018.9">
+<link rel="stylesheet" href="desktop-layout.css?v=20261110.1">
+<link rel="stylesheet" href="event-labels.css?v=20261110.1">
+<link rel="stylesheet" href="interface-polish.css?v=20261110.3">
+<link rel="stylesheet" href="desktop-stability.css?v=20261110.rollback1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/romasyay-icon.svg">
+<meta name="theme-color" content="#173e3a">
+</head>
+<body data-page="index">
+<div class="container">
+    <header>
+        <div class="logo-block"><div><span id="role-badge" class="admin-badge" hidden></span><img src="assets/romasyay-icon.svg" alt="Romasyay Logo" class="logo"></div></div>
+        <div class="month-selector" data-schedule-only hidden>
+            <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+            <span id="month-label" style="font-weight:900; font-size: 1.1rem; text-align: center; min-width: 140px;">...</span>
+            <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+    </header>
+    <div id="connection-status" role="status" data-schedule-only hidden><span>Підключення…</span><button id="retry-load" type="button" hidden>Повторити</button></div>
+
+    <div class="profile-push-row">
+    <details id="account-panel" class="account-panel auth-gate" open>
+      <summary class="profile-summary"><span class="profile-icon" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span><span class="profile-heading"><span id="account-summary">Відновлюємо вхід…</span><span id="profile-hint">Обліковий запис</span></span><span class="disclosure-arrow" aria-hidden="true">⌄</span></summary>
+      <p id="account-email" class="account-email" hidden></p>
+      <p id="account-status"></p>
+      <div id="account-forms" class="account-forms" hidden>
+        <form id="worker-login" hidden>
+          <p>Увійдіть, щоб переглянути графік своєї команди.</p>
+          <label>Електронна пошта<input id="worker-email" name="username" type="email" autocomplete="username" required maxlength="254"></label>
+          <label>Пароль<input id="worker-password" name="password" type="password" autocomplete="current-password" required></label>
+          <button type="submit">Увійти</button>
+          <button id="worker-reset" type="button">Забули пароль?</button>
+          <p>Ще немає облікового запису? <button id="show-register" class="text-button" type="button">Зареєструватися</button></p>
+        </form>
+        <form id="worker-register">
+          <p>Після підтвердження пошти адміністратор надасть доступ до графіка.</p>
+          <label>Тип акаунта<select id="register-role"><option value="worker">Працівник</option><option value="viewer">Глядач — лише перегляд графіка</option></select></label>
+          <label>Ім’я та прізвище<input id="register-name" name="name" autocomplete="name" required maxlength="80"></label>
+          <label>Електронна пошта<input id="register-email" name="email" type="email" autocomplete="email" required maxlength="254"></label>
+          <label>Пароль (від 8 символів)<input id="register-password" name="new-password" type="password" autocomplete="new-password" minlength="8" required></label>
+          <label>Повторіть пароль<input id="register-confirm" name="confirm-password" type="password" autocomplete="new-password" minlength="8" required></label>
+          <button type="submit">Створити обліковий запис</button>
+          <p>Вже зареєстровані? <button id="show-login" class="text-button" type="button">Увійти</button></p>
+        </form>
+      </div>
+      <div id="social-auth">
+        <label class="remember-label"><input type="checkbox" id="remember-me" checked> Запам’ятати мене на цьому пристрої</label>
+        <p class="auth-note">На спільному пристрої вимкніть «Запам’ятати мене». Пароль можна зберегти в менеджері паролів телефона.</p>
+      </div>
+      <div id="account-signed" hidden>
+        <div id="verification-controls">
+          <button id="resend-verification" type="button">Надіслати лист повторно</button>
+          <button id="check-verification" type="button">Я підтвердив пошту</button>
+        </div>
+        <p id="admin-request-status" role="status"></p>
+        <button id="request-admin" type="button" hidden>Подати заявку на адміністратора</button>
+        <a id="admin-link" class="account-control admin-open-button" href="admin.html" hidden><span aria-hidden="true">↗</span> Відкрити адмінку</a>
+    <button id="copy-access" type="button" class="account-control">Скопіювати мій код доступу</button>
+        <button id="worker-logout" type="button">Вийти</button>
+      </div>
+      <p id="account-message" role="status" aria-live="polite"></p>
+    </details>
+
+    <details id="push-panel" class="account-panel push-panel" hidden>
+      <summary id="push-bell" aria-label="Налаштування сповіщень" title="Сповіщення"><span id="push-bell-icon" aria-hidden="true">🔕</span><span id="push-summary-state" class="visually-hidden">Налаштувати</span></summary>
+      <p id="push-status" role="status" aria-live="polite"></p>
+      <div class="push-actions"><button id="push-enable" type="button" disabled>Увімкнути сповіщення</button>
+      <button id="push-disable" type="button" hidden>Вимкнути на цьому пристрої</button>
+      <button id="push-retry" type="button" class="text-button">Перевірити знову</button></div>
+    </details>
+    </div>
+    <div id="private-schedule" hidden>
+    <nav class="worker-tabs" aria-label="Розділи кабінету">
+      <button id="schedule-tab" type="button" aria-pressed="true" onclick="showScheduleView()">Графік</button>
+      <button id="personal-tab" type="button" aria-pressed="false" onclick="showPersonalView()">Мій кабінет</button>
+    </nav>
+    <section id="schedule-view">
+    <div id="viewer-export" hidden class="viewer-export"><button type="button" onclick="exportViewerSchedule(1)">📸 PNG (1–15)</button><button type="button" onclick="exportViewerSchedule(2)">📸 PNG (16–кінець)</button></div>
+    <button id="redDotToggleBtn" class="mode-btn off" onclick="toggleRedDotMode()">
+        🔴 Поставити вихідний
+    </button>
+
+    <div class="table-wrapper">
+        <table id="schedule">
+            <thead><tr id="header-row"></tr></thead>
+            <tbody id="body-row"></tbody>
+        </table>
+    </div>
+    
+
+    <div class="hint-text">
+        <span>* Для редагування свого графіка натисніть кнопку "Поставити вихідний" вище</span>
+        <div class="hint-legend">
+            <div class="legend-item"><span class="shift-icon shift-full"></span> Повний день</div>
+            <div class="legend-item"><span class="shift-icon shift-first"></span> Перша половина</div>
+            <div class="legend-item"><span class="shift-icon shift-second"></span> Друга половина</div>
+        </div>
+    </div>
+    </section>
+    <section id="personal-view" class="personal-view" hidden aria-labelledby="personal-heading">
+      <article class="personal-card">
+        <p class="personal-eyebrow">МІЙ КАБІНЕТ · <span id="month-label-profile"></span></p>
+        <h2 id="personal-heading">Особиста статистика</h2>
+        <h3 id="personal-title">Працівник</h3>
+        <div class="personal-total"><strong id="personal-days">0</strong><span id="personal-soho" class="soho-count"></span><span id="personal-supra" class="supra-count"></span><span>днів роботи</span></div>
+        <p id="personal-breakdown" class="personal-breakdown"></p>
+      </article>
+      <article class="personal-card">
+        <h3>Зміни за днями</h3>
+        <div id="personal-chart" class="personal-chart" role="img"></div>
+        <div class="personal-legend"><span>— немає зміни</span><span>½ половина дня</span><span>● повний день</span></div>
+      </article>
+    </section>
+    </div>
+</div>
+
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="confirmTitle" style="color: var(--text-main);">Підтвердження</h3>
+        <p id="confirmText">Ви дійсно хочете змінити статус?</p>
+        <div class="modal-actions">
+            <button id="confirmBtn" class="modal-btn btn-confirm" onclick="executeRedDot()">Так, підтвердити</button>
+            <button class="modal-btn btn-cancel" onclick="cancelRedDot()">Скасувати</button>
+        </div>
+    </div>
+</div>
+
+<div id="infoModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="infoModalName">Ім'я</h3>
+        <div class="emp-stats">
+            <p class="shift-stat-row"><span class="shift-stat-label">Зміни (1-15):</span><strong id="statFirstHalf">0</strong><span id="statFirstSoho" class="soho-count"></span><span id="statFirstSupra" class="supra-count"></span></p>
+            <p id="statSecondLabel" class="shift-stat-row"><span class="shift-stat-label">Зміни (16-31):</span><strong id="statSecondHalf">0</strong><span id="statSecondSoho" class="soho-count"></span><span id="statSecondSupra" class="supra-count"></span></p>
+        </div>
+        <button class="modal-btn btn-cancel" onclick="closeModal('infoModal')">Закрити</button>
+    </div>
+</div>
+
+<!-- Модальне вікно для ЧЕКІВ БЕНКЕТУ -->
+<div id="receiptModal" class="modal-overlay">
+    <div class="modal-content" style="width: 90%; max-width: 500px; padding: 15px;">
+        <h3 style="color: #e67e22; margin-bottom: 5px;">🎉 БЕНКЕТ</h3>
+        <p id="receiptDate" style="font-size: 0.9rem; margin-bottom: 15px; opacity: 0.8;"></p>
+        
+        <div id="receiptImagesContainer" style="display:flex; flex-direction:column; gap:10px;">
+            <!-- Сюди завантажаться фотографії -->
+        </div>
+        
+        <button class="modal-btn" onclick="toggleColFromReceipt()" style="margin-top: 15px;">🟩 Виділити стовпець</button>
+        <button class="modal-btn btn-cancel" onclick="closeModal('receiptModal')">Закрити</button>
+    </div>
+</div>
+
+<script type="module" src="js/legacy-ui.js?v=20261110.rollback1"></script>
+</body>
+</html>
