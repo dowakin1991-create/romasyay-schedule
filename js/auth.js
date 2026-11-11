@@ -6,8 +6,8 @@ import {
   createUserWithEmailAndPassword, linkWithCredential, EmailAuthProvider,
   updateProfile, sendEmailVerification, sendPasswordResetEmail, reload
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { firebaseApp } from "./store.js?v=20261029.soho1";
-import { OWNER_UIDS, PRIMARY_OWNER_UID, TECH_OWNER_UID } from "./config.js?v=20261015.2";
+import { firebaseApp } from "./store.js?v=20261111.bindingfix";
+import { OWNER_UIDS, PRIMARY_OWNER_UID, TECH_OWNER_UID } from "./config.js?v=20261111.rolefix";
 
 const auth = getAuth(firebaseApp);
 auth.languageCode = 'uk';
