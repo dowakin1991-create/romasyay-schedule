@@ -1,4 +1,4 @@
-import {PUSH_API_URL} from './push-config.js?v=20261017.5';
+import {PUSH_API_URL} from './push-config.js?v=20261111.2';
 import {currentUser} from './auth.js?v=20261019.8';
 async function call(name, data = {}) {
   if (!PUSH_API_URL) throw Object.assign(new Error('Безкоштовний сервіс сповіщень ще не підключено.'), {code:'not-configured'});
