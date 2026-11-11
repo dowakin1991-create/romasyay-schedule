@@ -1,4 +1,4 @@
-import { getFirestore, doc, collection, query, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFirestore, doc, getDoc, collection, query, orderBy, limit, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { firebaseApp } from './store.js?v=20261111.bindingfix';
 import { currentUser } from './auth.js?v=20261111.rolefix';
 
@@ -12,6 +12,19 @@ const monthKey=()=>window.romasyayCurrentMonth?.()||'';
 const dateKey=(y,m,d)=>y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 const today=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t)?.value;return part('year')+'-'+part('month')+'-'+part('day')};
 function userLabel(user){return String(user?.displayName?.trim()||user?.email?.split('@')[0]||'Працівник').slice(0,80)}
+async function workerDisplayName(user,key){
+  let name=userLabel(user);
+  try{
+    const access=await getDoc(doc(db,'teamAccess',user.uid));
+    const id=access.data()?.employeeId;
+    if(id){
+      const schedule=await getDoc(doc(db,'schedules',key));
+      const record=(schedule.data()?.employees||[]).find(e=>String(e.id)===String(id));
+      if(record?.name?.trim())name=String(record.name.trim()).slice(0,80);
+    }
+  }catch{/* Keep a stable account label when roster is unavailable. */}
+  return name;
+}
 function close(){selectedDay=null;$('fryer-editor').hidden=true}
 function reset(){ticket++;unsubscribeMonth?.();unsubscribeHistory?.();unsubscribeMonth=unsubscribeHistory=null;entries={};loaded=false;close();$('fryer-history-list').replaceChildren()}
 function watch(){
@@ -88,15 +101,16 @@ async function save(ev){
  const note=$('fryer-note').value.trim();
  const ref=doc(db,'fryerMaintenance',key),auditRef=doc(collection(db,'fryerMaintenance',key,'history'));
  saving=true;$('fryer-save').disabled=true;
+ const actorName=await workerDisplayName(user,key);
  try{
   const result=await runTransaction(db,async tx=>{
     const snap=await tx.get(ref),data=snap.data()||{},days={...(data.days||{})};
     if(entry(days[String(day)]).oilChanged)throw new Error('Запис уже існує. Зверніться до адміністратора для виправлення.');
     const before=days[String(day)]||{};
-    const after={oilChanged:true,note,performedBy:userLabel(user),performedUid:user.uid};
+    const after={oilChanged:true,note,performedBy:actorName,performedUid:user.uid};
     days[String(day)]=after;
     tx.set(ref,{days,lastAuditId:auditRef.id,updatedAt:serverTimestamp()});
-    tx.set(auditRef,{dayKey:String(day),actorUid:user.uid,actorName:userLabel(user),createdAt:serverTimestamp(),before,after});
+    tx.set(auditRef,{dayKey:String(day),actorUid:user.uid,actorName,createdAt:serverTimestamp(),before,after});
     return true;
   });
   if(result){close();$('fryer-status').textContent='Заміну олії збережено.'}
