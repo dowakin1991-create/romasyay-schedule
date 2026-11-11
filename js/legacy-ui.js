@@ -352,12 +352,8 @@ window.openDaySettings = day => {
 };
 window.toggleColFromSettings = () => { window.toggleColHighlight(currentSettingsDay); hide('daySettingsModal'); currentSettingsDay = null; };
 window.handleHeaderClick = day => {
-  if (!ready) return;
-  if (!banquets[day]?.active) return window.toggleColHighlight(day);
-  currentReceiptDay = day;
-  $('receiptDate').textContent = `${day} ${monthNames[currentDate.getMonth()].toLowerCase()} ${currentDate.getFullYear()}`;
-  $('receiptModal').querySelector('h3').textContent=banquets[day].type==='cleaning'?'🧹 ГЕНЕРАЛЬНЕ ПРИБИРАННЯ':'🎉 БЕНКЕТ';
-  renderWorkerReceipts(); show('receiptModal');
+  if(!ready)return;
+  window.toggleColHighlight(day);
 };
 window.toggleColFromReceipt = () => { window.toggleColHighlight(currentReceiptDay); hide('receiptModal'); currentReceiptDay = null; };
 function renderWorkerReceipts() {
@@ -371,39 +367,14 @@ window.chooseDayEvent = type => {
   if(type==='cleaning')return window.markCleaning();
 };
 function renderDaySettings() {
-  const day=currentSettingsDay,b=banquets[day],container=$('banquetContainer');
+  const day=currentSettingsDay,container=$('banquetContainer');
   if(!day)return;
   container.replaceChildren();
-  const file=document.createElement('input');
-  file.type='file'; file.id='banquetFile'; file.accept='image/*'; file.multiple=true; file.hidden=true;
-  file.addEventListener('change',event=>window.handleBanquetUpload(event));
-  container.append(file);
-  const actions=document.createElement('div'); actions.className='day-action-list';container.append(actions);
-  const button=(label,color,click)=>{
-    const el=document.createElement('button');el.type='button';el.className='day-action-btn '+color;el.textContent=label;el.onclick=click;actions.append(el);return el;
-  };
-  const active=!!b?.active, type=b?.type==='cleaning'?'cleaning':'banquet';
-  const highlighting=activeColDay===day;
-  if(daySettingsStage==='banquet'){
-    const text=document.createElement('p');text.className='day-action-note';text.textContent='Як додати бенкет?';actions.append(text);
-    button('📸 Додати фото чеку','gold',()=>file.click());
-    button('🎉 Виділити бенкет без чеку','gold',()=>window.markBanquetNoPhoto());
-    button('← Назад','neutral',()=>window.showDayMainActions());
-  }else{
-    button(highlighting?'🟩 Зняти виділення стовпця':'🟩 Виділити стовпець','green',()=>window.toggleColFromSettings());
-    if(active){
-      const msg=document.createElement('p');msg.className='day-action-note';msg.textContent=type==='cleaning'?'🧹 Заплановано генеральне прибирання':'🎉 Заплановано бенкет';actions.append(msg);
-      if(type==='banquet')button('📸 Додати фото чеку','gold',()=>file.click());
-      button('🗑 Скасувати '+(type==='cleaning'?'генеральне прибирання':'бенкет'),'danger',()=>window.deleteBanquet());
-      if(type==='cleaning')button('🎉 Додати бенкет','gold',()=>{if(confirm('Замінити прибирання на бенкет?'))window.showBanquetChoices();});
-      else button('🧹 Додати генеральне прибирання','pink',()=>{if(confirm('Замінити бенкет на прибирання? Фото чеків цього бенкету буде від’єднано.'))window.markCleaning();});
-    }else{
-      button('🎉 Додати бенкет','gold',()=>window.showBanquetChoices());
-      button('🧹 Додати генеральне прибирання','pink',()=>window.markCleaning());
-    }
-  }
-  const photos=document.createElement('div');photos.id='legacy-receipts';container.append(photos);
-  if(active&&type==='banquet')renderPhotos(photos,getDocId(),day,b,true);
+  const button=document.createElement('button');
+  button.type='button';button.className='day-action-btn green';
+  button.textContent=activeColDay===day?'🟩 Зняти виділення стовпця':'🟩 Виділити стовпець';
+  button.addEventListener('click',()=>window.toggleColFromSettings());
+  container.append(button);
 }
 
 function renderPhotos(container,month,day,banquet,editable) {
@@ -463,7 +434,7 @@ window.handleBanquetUpload = action(async event => {
   } catch(error) {throw new Error(`Збережено фото: ${saved}. ${error.message || 'Помилка завантаження.'}`);}
   finally {event.target.value='';}
 });
-const noticeTitles={'schedule-added':'Графік додано',schedule:'Графік змінено',banquet:'Додано Бенкет',cleaning:'Додано генеральне прибирання','cancel-banquet':'Бенкет скасовано','cancel-cleaning':'Генеральне прибирання скасовано'};
+const noticeTitles={'schedule-added':'Графік додано',schedule:'Графік змінено'};
 function noticeText(n) {
  const date=n.kind==='schedule-added'?`${monthNames[currentDate.getMonth()].toLowerCase()} ${String(n.day).padStart(2,'0')}-${String(n.endDay).padStart(2,'0')}`:`${String(n.day).padStart(2,'0')}.${String(currentDate.getMonth()+1).padStart(2,'0')}`;
  return `${noticeTitles[n.kind]} ${n.kind==='schedule-added'?'на ':''}${date}.`;
@@ -505,17 +476,17 @@ window.notifyTeam = action(async () => {
   if (!allowed || !isAdmin(currentUser())) return;
   const journal=changeJournal(getDocId()),notices=[];
   for(const day of journal.shifts)notices.push({kind:'schedule',day:Number(day)});
-  for(const [day,oldType] of journal.banquets){const event=banquets[day];notices.push({kind:event?.active?(event.type==='cleaning'?'cleaning':'banquet'):(oldType==='cleaning'?'cancel-cleaning':'cancel-banquet'),day:Number(day)});}
+  // Romasyay has no banquet or general cleaning events.
   const unique=[...new Map(notices.map(item=>[`${item.kind}:${item.day}`,item])).values()].sort((a,b)=>a.day-b.day);
   if(!unique.length)return toast('Немає нових змін для сповіщення.','error');
   openNoticeEditor(unique,getDocId(),true);
 });
 window.exportViewerSchedule = action(async half => {
   if(!viewerMode)return;
-  await exportPNG(currentDate,{employees,banquets},half);
+  await exportPNG(currentDate,{employees,banquets:{}},half);
 });
 window.exportHalfMonth = action(async (event,half) => {
-  await exportPNG(currentDate,{employees,banquets},half,{container:$('resultImageContainer'),modal:$('resultModal')});
+  await exportPNG(currentDate,{employees,banquets:{}},half,{container:$('resultImageContainer'),modal:$('resultModal')});
 });
 $('retry-load').addEventListener('click',()=>{ if(allowed)loadData();else startWorker(); });
 initPush();
@@ -618,7 +589,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             const dayIndex = new Date(year, month, i).getDay();
             const isWeekend = (dayIndex === 0 || dayIndex === 6);
             const isToday = (year === todayDate.getFullYear() && month === todayDate.getMonth() && i === todayDate.getDate());
-            const dayEvent = banquets[i]?.active ? banquets[i] : null;
+            const dayEvent = null;
             const isBanquet = !!dayEvent;
             
             let thClass = isWeekend ? 'weekend' : '';
@@ -653,7 +624,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
                     const day = i + 1;
                     const isWeekend = (new Date(year, month, day).getDay() % 6 === 0);
                     const isToday = (year === todayDate.getFullYear() && month === todayDate.getMonth() && day === todayDate.getDate());
-                    const isBanquet = (banquets[day] && banquets[day].active);
+                    const isBanquet = false;
                     
                     let tdClass = isWeekend ? 'weekend' : '';
                     if (isToday) tdClass += ' current-day-td';
@@ -696,7 +667,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             const dayIndex = new Date(year, month, i).getDay();
             const isWeekend = (dayIndex === 0 || dayIndex === 6);
             const isToday = (year === todayDate.getFullYear() && month === todayDate.getMonth() && i === todayDate.getDate());
-            const dayEvent = banquets[i]?.active ? banquets[i] : null;
+            const dayEvent = null;
             const isBanquet = !!dayEvent;
             
             let thClass = isWeekend ? 'weekend' : '';
@@ -741,7 +712,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
                     const day = i + 1;
                     const isWeekend = (new Date(year, month, day).getDay() % 6 === 0);
                     const isToday = (year === todayDate.getFullYear() && month === todayDate.getMonth() && day === todayDate.getDate());
-                    const isBanquet = (banquets[day] && banquets[day].active);
+                    const isBanquet = false;
                     
                     let tdClass = isWeekend ? 'weekend' : '';
                     if (isToday) tdClass += ' current-day-td';
