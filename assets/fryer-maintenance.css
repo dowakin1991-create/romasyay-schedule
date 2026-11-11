@@ -48,3 +48,12 @@
 .fryer-history-top time{font-size:12px;color:var(--muted)}
 .fryer-history-item .fryer-history-author{font-size:12px;color:var(--muted);margin:7px 0}
 .fryer-history-changes{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:5px;font-size:14px;overflow-wrap:anywhere}
+
+.fryer-oil-details[hidden]{display:none!important}
+.fryer-oil-details{display:grid;gap:11px;margin:0 0 4px;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--control)}
+.fryer-dialog label.fryer-field-label{display:flex;flex-direction:column;align-items:stretch;gap:5px;font-weight:650;font-size:14px}
+.fryer-oil-details input[type=text],.fryer-oil-details input[type=datetime-local]{
+ width:100%;min-width:0;box-sizing:border-box;min-height:44px;
+ padding:10px;border:1px solid var(--border);border-radius:10px;
+ background:var(--bg-card);color:var(--text-main);font:inherit;font-size:16px
+}
