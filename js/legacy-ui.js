@@ -85,12 +85,12 @@ function renderPersonalDashboard(){
   $('personal-days').textContent=Number.isInteger(count)?String(count):count.toFixed(1).replace('.',',');
   $('personal-soho').textContent=soho.size?`+${soho.size}`:'';
   $('personal-supra').textContent=supra.size?`+${supra.size}`:'';
-  $('personal-breakdown').textContent=`${full.size} повних · ${first.size} перших половин · ${second.size} других половин · ${soho.size} SOHO · ${supra.size} SUPRA`;
+  $('personal-breakdown').textContent=`${full.size} повних · ${first.size} перших половин · ${second.size} других половин · ${soho.size} ДРО · ${supra.size} БОР`;
   const chart=$('personal-chart');chart.replaceChildren();chart.setAttribute('aria-label',`Діаграма змін за ${monthNames[month]} ${year}`);
   for(let day=1;day<=totalDays;day++){
     const value=(full.has(day)||soho.has(day)||supra.has(day))?1:(first.has(day)||second.has(day))?.5:0;
     const column=document.createElement('div');column.className='personal-bar-column';
-    const bar=document.createElement('span');bar.className='personal-bar'+(value?' is-work':'');bar.style.setProperty('--bar-height',`${Math.max(value*100,4)}%`);bar.title=`${day}: ${soho.has(day)?'SOHO':supra.has(day)?'SUPRA':value===1?'1 день':value===.5?'½ дня':'без зміни'}`;
+    const bar=document.createElement('span');bar.className='personal-bar'+(value?' is-work':'');bar.style.setProperty('--bar-height',`${Math.max(value*100,4)}%`);bar.title=`${day}: ${soho.has(day)?'ДРО':supra.has(day)?'БОР':value===1?'1 день':value===.5?'½ дня':'без зміни'}`;
     const label=document.createElement('small');label.textContent=String(day);
     column.append(bar,label);chart.append(column);
   }
@@ -651,8 +651,8 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
                     if(emp.shifts.includes(day)) content = '<span class="shift-icon shift-full"></span>';
                     else if(emp.shiftsFirst.includes(day)) content = '<span class="shift-icon shift-first"></span>';
                     else if(emp.shiftsSecond.includes(day)) content = '<span class="shift-icon shift-second"></span>';
-                    else if((emp.shiftsSoho||[]).includes(day)) content = '<span class="shift-soho">SOHO</span>';
-                    else if((emp.shiftsSupra||[]).includes(day)) content = '<span class="shift-supra">SUPRA</span>';
+                    else if((emp.shiftsSoho||[]).includes(day)) content = '<span class="shift-soho">ДРО</span>';
+                    else if((emp.shiftsSupra||[]).includes(day)) content = '<span class="shift-supra">БОР</span>';
                     if(emp.unavail.includes(day)) content += '<span class="unavailable">•</span>';
                     
                     return `<td data-day="${day}" class="${tdClass}" onclick="handleCellClick(${safeId(emp.id)}, ${day})">${content}</td>`;
@@ -739,8 +739,8 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
                     if(emp.shifts.includes(day)) content = '<span class="shift-icon shift-full"></span>';
                     else if(emp.shiftsFirst.includes(day)) content = '<span class="shift-icon shift-first"></span>';
                     else if(emp.shiftsSecond.includes(day)) content = '<span class="shift-icon shift-second"></span>';
-                    else if((emp.shiftsSoho||[]).includes(day)) content = '<span class="shift-soho">SOHO</span>';
-                    else if((emp.shiftsSupra||[]).includes(day)) content = '<span class="shift-supra">SUPRA</span>';
+                    else if((emp.shiftsSoho||[]).includes(day)) content = '<span class="shift-soho">ДРО</span>';
+                    else if((emp.shiftsSupra||[]).includes(day)) content = '<span class="shift-supra">БОР</span>';
                     if(emp.unavail.includes(day)) content += '<span class="unavail-marker">•</span>';
                     
                     return `<td data-day="${day}" class="${tdClass}" onclick="handleCellClick(${safeId(emp.id)}, ${day})">${content}</td>`;
