@@ -72,6 +72,10 @@ form.addEventListener('submit',async event=>{
  finally{loading=false;form.querySelector('button[type=submit]').disabled=false}
 });
 
+$('fryer-admin-open').addEventListener('click',()=>{
+  const panel=$('fryer-admin-panel');panel.open=!panel.open;
+  if(panel.open)panel.scrollIntoView({behavior:'smooth',block:'start'});
+});
 window.addEventListener('romasyay:admin-fryer-day',event=>{
  const month=event.detail?.month,day=Number(event.detail?.day);
  if(!/^20\d\d-(0[1-9]|1[0-2])$/.test(month||'')||!Number.isInteger(day)||day<1||day>31)return;
