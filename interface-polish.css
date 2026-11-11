@@ -1,0 +1,289 @@
+/* РОМАСЯЙ ГРАФІК UI polish: presentation only. Applied after all legacy/theme CSS. */
+body[data-page] .table-wrapper {
+  border:1px solid var(--border);
+  border-radius:18px!important;
+  overflow:auto;
+  background:var(--bg-card);
+  box-shadow:0 8px 26px rgba(5,20,28,.16);
+  isolation:isolate;
+}
+body[data-page] .table-wrapper table {
+  border-spacing:0;
+  border-collapse:separate;
+  margin:0;
+  background:var(--bg-card);
+}
+body[data-page] .table-wrapper thead th {
+  /* The outer container owns the top outline; avoid doubled seams. */
+  border-top:0;
+}
+body[data-page] .table-wrapper thead th:first-child {
+  text-align:center!important;
+  padding-left:4px!important;
+  padding-right:4px!important;
+  vertical-align:middle;
+  border-top-left-radius:16px;
+  background-clip:padding-box;
+}
+body[data-page] .table-wrapper thead th:last-child {
+  border-top-right-radius:16px;
+}
+body[data-page] .table-wrapper tbody tr:last-child td:first-child {
+  border-bottom-left-radius:16px;
+}
+body[data-page] .table-wrapper tbody tr:last-child td:last-child {
+  border-bottom-right-radius:16px;
+}
+body[data-page] .table-wrapper tbody td:not(:first-child) {
+  position:relative;
+}
+/* Keep unavailable-day dots precisely centered inside their date cells. */
+body[data-page] .table-wrapper tbody td .unavailable,
+body[data-page] .table-wrapper tbody td .unavail-marker {
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  display:block!important;
+  width:8px;
+  height:8px;
+  padding:0;
+  margin:0;
+  border-radius:50%;
+  background:#ff5263;
+  box-shadow:0 0 0 2px rgba(255,82,99,.12);
+  color:transparent!important;
+  font-size:0!important;
+  line-height:0!important;
+  vertical-align:initial!important;
+  pointer-events:none;
+}
+@media (max-width:600px) {
+  body[data-page] .table-wrapper {border-radius:16px!important;border-top:0!important;box-shadow:0 5px 16px rgba(5,20,28,.12)}
+  body[data-page] .table-wrapper thead th:first-child {border-top-left-radius:14px}
+  body[data-page] .table-wrapper thead th:last-child {border-top-right-radius:14px}
+  body[data-page] .table-wrapper tbody tr:last-child td:first-child {border-bottom-left-radius:14px}
+  body[data-page] .table-wrapper tbody tr:last-child td:last-child {border-bottom-right-radius:14px}
+  body[data-page] .table-wrapper tbody td .unavailable,
+  body[data-page] .table-wrapper tbody td .unavail-marker {width:7px;height:7px}
+}
+@media (min-width:960px) {
+  body[data-page="index"]>.container {max-width:1380px}
+  /* Desktop dashboard controls are arranged as a deliberate toolbar. */
+  body[data-page="index"] .profile-push-row {
+    width:min(100%,560px);
+    max-width:560px;
+    gap:12px;
+    margin:8px 0 19px;
+  }
+  body[data-page="index"] .profile-push-row #account-panel {
+    max-width:none;
+    min-height:66px;
+    border-radius:16px;
+  }
+  body[data-page="index"] .profile-push-row #push-panel {
+    flex:0 0 64px;
+    width:64px;
+    min-width:64px;
+    border-radius:16px;
+  }
+  body[data-page="index"] .profile-push-row #push-panel[open] {
+    flex-basis:260px;
+    width:auto;
+  }
+  body[data-page="index"] .profile-push-row #push-panel summary {min-height:64px}
+  body[data-page="index"] #private-schedule {
+    position:relative;
+    min-width:0;
+  }
+  body[data-page="index"] #private-schedule .worker-tabs {
+    width:min(100%,490px);
+    max-width:490px;
+    margin:0 0 20px;
+    padding:5px;
+    border-radius:16px;
+    min-height:57px;
+    box-shadow:0 6px 16px rgba(3,21,30,.1);
+  }
+  body[data-page="index"] #private-schedule .worker-tabs button {
+    font-size:.92rem;
+    min-height:45px;
+    border-radius:12px;
+  }
+  body[data-page="index"] #schedule-view #redDotToggleBtn {
+    position:absolute;
+    top:0;
+    right:auto;
+    left:508px;
+    width:285px;
+    max-width:285px;
+    min-height:57px;
+    margin:0;
+    border-radius:15px;
+    padding:10px 14px;
+    font-size:.88rem;
+    box-shadow:0 6px 16px rgba(3,21,30,.08);
+  }
+  body[data-page="index"] #schedule-view #redDotToggleBtn[hidden] {display:none!important}
+  body[data-page="index"] #schedule-view .table-wrapper {margin-top:3px}
+  body[data-page="index"] #private-schedule .hint-text {
+    max-width:100%;
+    margin-top:16px;
+  }
+  body[data-page="index"] .container>header {
+    border-radius:20px;
+    box-shadow:0 6px 22px rgba(3,21,30,.09);
+  }
+}
+@media (min-width:960px) and (max-width:1100px) {
+  body[data-page="index"] #private-schedule .worker-tabs {width:440px}
+  body[data-page="index"] #schedule-view #redDotToggleBtn {left:456px;width:250px}
+}
+
+/* Premium desktop workspace: no cloned controls, no change to mobile layout. */
+@media (min-width:960px) {
+  body[data-page="index"] {
+    background:
+      radial-gradient(ellipse 65% 55% at 2% 5%,rgba(12,110,112,.20),transparent 70%),
+      radial-gradient(ellipse 55% 65% at 100% 45%,rgba(35,68,116,.20),transparent 75%),
+      #101a22;
+  }
+  body[data-page="index"]>.container {
+    width:min(calc(100% - 24px),1480px);
+    max-width:1480px;
+    margin-inline:auto;
+  }
+  body[data-page="index"] .container>header {
+    min-height:90px;
+    padding:15px 26px;
+    border:1px solid rgba(127,182,198,.27);
+    background:linear-gradient(115deg,rgba(23,59,65,.86),rgba(27,40,58,.86));
+    box-shadow:0 14px 36px rgba(0,0,0,.16), inset 0 1px rgba(255,255,255,.07);
+    border-radius:22px;
+    margin-bottom:18px;
+  }
+  body[data-page="index"] .container>header .logo {
+    width:51px;
+    height:51px;
+  }
+  body[data-page="index"] .container>header .month-selector #month-label {
+    font-size:1.35rem!important;
+    font-weight:900;
+    letter-spacing:-.025em;
+  }
+  body[data-page="index"] .container>header .nav-btn {
+    width:48px;
+    min-width:48px;
+    height:48px;
+    min-height:48px;
+    border:1px solid rgba(145,191,203,.35);
+    background:rgba(255,255,255,.055);
+    transition:background .18s ease,border-color .18s ease,transform .18s ease;
+  }
+  body[data-page="index"] .container>header .nav-btn:hover {
+    background:rgba(31,155,170,.22);
+    border-color:rgba(64,194,200,.60);
+    transform:translateY(-1px);
+  }
+  body[data-page="index"] #connection-status {
+    margin:5px 5px 13px;
+  }
+  body[data-page="index"] .profile-push-row {
+    width:min(100%,665px);
+    max-width:665px;
+    gap:12px;
+    margin:4px 0 24px;
+    align-items:stretch;
+  }
+  body[data-page="index"] .profile-push-row #account-panel,
+  body[data-page="index"] .profile-push-row #push-panel {
+    border:1px solid rgba(126,186,198,.30);
+    background:linear-gradient(120deg,rgba(24,56,64,.88),rgba(27,42,57,.86));
+    box-shadow:0 10px 26px rgba(0,0,0,.12),inset 0 1px rgba(255,255,255,.045);
+  }
+  body[data-page="index"] .profile-push-row #account-panel {
+    border-radius:19px;
+    min-height:72px;
+  }
+  body[data-page="index"] .profile-push-row #push-panel {
+    flex:0 0 72px;
+    width:72px;
+    min-width:72px;
+    min-height:72px;
+    border-radius:19px;
+  }
+  body[data-page="index"] .profile-push-row #push-panel summary {
+    min-height:70px;
+  }
+  body[data-page="index"] #private-schedule .worker-tabs {
+    width:465px;
+    max-width:465px;
+    min-height:62px;
+    padding:6px;
+    margin:0 0 22px;
+    border:1px solid rgba(131,177,191,.42);
+    border-radius:18px;
+    background:linear-gradient(110deg,rgba(22,47,58,.88),rgba(27,38,53,.88));
+    box-shadow:0 10px 28px rgba(0,0,0,.14);
+  }
+  body[data-page="index"] #private-schedule .worker-tabs button {
+    border-radius:13px;
+    min-height:48px;
+    font-size:.96rem;
+    letter-spacing:.005em;
+    transition:background .18s ease,box-shadow .18s ease;
+  }
+  body[data-page="index"] #private-schedule .worker-tabs button[aria-pressed="true"] {
+    background:linear-gradient(120deg,#0e7786,#1b94a0);
+    box-shadow:0 4px 16px rgba(14,133,148,.25);
+  }
+  body[data-page="index"] #schedule-view #redDotToggleBtn {
+    top:0;
+    left:490px;
+    right:auto;
+    width:304px;
+    max-width:304px;
+    min-height:62px;
+    padding:10px 17px;
+    border-radius:18px;
+    border:1px solid rgba(142,188,201,.42);
+    background:linear-gradient(115deg,rgba(26,48,60,.92),rgba(29,43,60,.86));
+    font-size:.93rem;
+    letter-spacing:.005em;
+    box-shadow:0 10px 28px rgba(0,0,0,.12);
+  }
+  body[data-page="index"] #schedule-view #redDotToggleBtn.on {
+    background:linear-gradient(115deg,#a62937,#c5384e);
+    border-color:#ed8793;
+  }
+  body[data-page="index"] #schedule-view #redDotToggleBtn:hover:not(:disabled) {
+    filter:brightness(1.12);
+  }
+  body[data-page="index"] #schedule-view .table-wrapper {
+    margin-top:8px;
+    border:1px solid rgba(116,176,196,.40);
+    border-radius:24px!important;
+    box-shadow:0 16px 44px rgba(0,0,0,.23),0 0 0 4px rgba(16,116,124,.04);
+  }
+  body[data-page="index"] #schedule-view .table-wrapper thead th:first-child {
+    border-top-left-radius:22px;
+  }
+  body[data-page="index"] #schedule-view .table-wrapper thead th:last-child {
+    border-top-right-radius:22px;
+  }
+  body[data-page="index"] #schedule-view .table-wrapper tbody tr:last-child td:first-child {
+    border-bottom-left-radius:22px;
+  }
+  body[data-page="index"] #schedule-view .table-wrapper tbody tr:last-child td:last-child {
+    border-bottom-right-radius:22px;
+  }
+}
+@media (min-width:960px) and (max-width:1100px) {
+  body[data-page="index"] #private-schedule .worker-tabs {width:420px;max-width:420px}
+  body[data-page="index"] #schedule-view #redDotToggleBtn {left:440px;width:270px;max-width:270px}
+}
+@media (prefers-reduced-motion:reduce) {
+  body[data-page] .table-wrapper {scroll-behavior:auto}
+}
