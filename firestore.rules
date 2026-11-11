@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null && request.auth.uid == 'REPLACE_WITH_ROMASYAY_OWNER_UID';
+    }
+    function isAdmin() {
+      return isOwner() || (request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/adminRequests/$(request.auth.uid))
+        && get(/databases/$(database)/documents/adminRequests/$(request.auth.uid)).data.status == 'approved');
+    }
+    function isViewer() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/viewerAccess/$(request.auth.uid))
+        && get(/databases/$(database)/documents/viewerAccess/$(request.auth.uid)).data.role == 'viewer';
+    }
+    function approvedAccount() {
+      return request.auth != null && (!exists(/databases/$(database)/documents/userDirectory/$(request.auth.uid)) || get(/databases/$(database)/documents/userDirectory/$(request.auth.uid)).data.get('status','approved') == 'approved');
+    }
+    function canReadSchedule() {
+      return isAdmin() || (approvedAccount() && ((isViewer() && exists(/databases/$(database)/documents/userDirectory/$(request.auth.uid)) && get(/databases/$(database)/documents/userDirectory/$(request.auth.uid)).data.role == 'viewer') || (request.auth != null && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/teamAccess/$(request.auth.uid))
+        && get(/databases/$(database)/documents/employeeAccess/$(get(/databases/$(database)/documents/teamAccess/$(request.auth.uid)).data.employeeId)).data.uid == request.auth.uid)));
+    }
+    match /userDirectory/{uid} {
+      allow get, list: if isOwner() || (request.auth != null && request.auth.uid == uid);
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name','email','role','status'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 80
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role in ['worker','viewer']
+        && request.resource.data.get('status','pending') == (resource == null ? 'pending' : resource.data.get('status','approved'));
+      allow update: if isOwner() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status in ['approved','pending'];
+      allow delete: if false;
+    }
+    match /presence/{uid} {
+      // Only the signed-in account can update its own heartbeat; only the owner
+      // can inspect presence of other accounts.
+      allow get: if isOwner() || (request.auth != null && request.auth.uid == uid);
+      allow list: if isOwner();
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.resource.data.keys().hasOnly(['lastSeen'])
+        && request.resource.data.lastSeen == request.time;
+      allow delete: if false;
+    }
+    match /viewerAccess/{uid} {
+      allow read: if isOwner() || (request.auth != null && request.auth.uid == uid);
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['role']) && request.resource.data.role == 'viewer';
+      allow update, delete: if isOwner();
+    }
+    match /teamAccess/{uid} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['employeeId'])
+        && request.resource.data.employeeId is string
+        && request.resource.data.employeeId.size() > 0 && request.resource.data.employeeId.size() <= 128;
+      allow delete: if isAdmin();
+    }
+    match /adminRequests/{uid} {
+      allow read: if isOwner() || (request.auth != null && request.auth.uid == uid);
+      allow create: if request.auth != null && request.auth.uid == uid
+        && !isOwner() && request.auth.token.email_verified == true
+        && request.resource.data.keys().hasOnly(['name','email','status','updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.status == 'pending' && request.resource.data.updatedAt == request.time;
+      allow update: if uid != 'REPLACE_WITH_ROMASYAY_OWNER_UID'
+        && request.resource.data.keys().hasOnly(['name','email','status','updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && ((isOwner()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+          && ((resource.data.status == 'pending' && request.resource.data.status in ['approved','rejected'])
+            || (resource.data.status == 'approved' && request.resource.data.status == 'revoked')))
+          || (request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true
+            && resource.data.status in ['rejected','revoked'] && request.resource.data.status == 'pending'
+            && request.resource.data.email == request.auth.token.email
+            && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80));
+      allow delete: if false;
+    }
+    match /schedules/{month} {
+      allow read: if canReadSchedule();
+      allow write: if isAdmin();
+    }
+    match /schedules/{month}/receipts/{receiptId} {
+      allow read: if canReadSchedule();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['image', 'createdAt'])
+        && request.resource.data.image is string
+        && request.resource.data.image.size() <= 700000
+        && request.resource.data.image.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+')
+        && request.resource.data.createdAt == request.time;
+      allow delete: if isAdmin();
+    }
+    match /employeeAccess/{employeeId} {
+      allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    match /availability/{month}/employees/{employeeId} {
+      allow read: if canReadSchedule();
+      allow create, update: if request.auth != null
+        && (isAdmin() || (approvedAccount() && request.auth.token.email_verified == true
+          && get(/databases/$(database)/documents/employeeAccess/$(employeeId)).data.uid == request.auth.uid))
+        && request.resource.data.keys().hasOnly(['days', 'updatedAt'])
+        && request.resource.data.days is list
+        && request.resource.data.days.size() <= 31
+        && request.resource.data.days.hasOnly([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31])
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
+
