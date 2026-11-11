@@ -3,8 +3,8 @@ import { initUserDirectory, refreshOwnerUserDirectory, watchMyApproval } from '.
 import { watchTeamAccess, watchViewerAccess } from './access.js?v=20261019.8';
 import { initOwnerPanel } from './owner.js?v=20261019.8';
 import { initAccount, openAccount, setScheduleAccess } from './account.js?v=20261031.presence';
-import { isOwner, isPrimaryOwner, currentUser, canEditWorker, ensureWorkerSession, isAdmin, login, logout, watchAuth } from './auth.js?v=20261019.8';
-import { ensureMonthRoster, moveEmployee, subscribeSchedule, monthId, updateSchedule, setAvailability, employeeAccess, bindEmployee, bindOwnerEmployee, addReceipt, deleteReceipt, removeBanquet, readReceipt } from './store.js?v=20261110.supra';
+import { isOwner, isPrimaryOwner, currentUser, canEditWorker, ensureWorkerSession, isAdmin, login, logout, watchAuth } from './auth.js?v=20261111.rolefix';
+import { ensureMonthRoster, moveEmployee, subscribeSchedule, monthId, updateSchedule, setAvailability, employeeAccess, bindEmployee, bindOwnerEmployee, addReceipt, deleteReceipt, removeBanquet, readReceipt } from './store.js?v=20261111.bindingfix';
 import { dutyName as getDutyName, shiftCount, toast } from './ui.js?v=20261015.2';
 import { withBusy, recordChange, changeJournal, clearChangeJournal } from './session.js?v=20261017.4';
 import { compressReceipt } from './receipts.js?v=20261015.2';
