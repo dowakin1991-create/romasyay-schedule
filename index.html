@@ -241,10 +241,12 @@
     </nav>
     <section id="schedule-view">
     <div id="viewer-export" hidden class="viewer-export"><button type="button" onclick="exportViewerSchedule(1)">📸 PNG (1–15)</button><button type="button" onclick="exportViewerSchedule(2)">📸 PNG (16–кінець)</button></div>
+    <div class="schedule-actions">
     <button id="redDotToggleBtn" class="mode-btn off" onclick="toggleRedDotMode()">
         🔴 Поставити вихідний
     </button>
     <button id="fryer-journal-open" class="fryer-journal-btn" type="button" onclick="showFryerView()">🛢️ Фритюр</button>
+    </div>
 
     <div class="table-wrapper">
         <table id="schedule">
