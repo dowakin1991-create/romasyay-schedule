@@ -1,0 +1,36 @@
+import { getFirestore, doc, onSnapshot, collection, getDocs, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { firebaseApp } from './store.js?v=20261029.soho1';
+import { isOwner } from './auth.js?v=20261019.8';
+const db=getFirestore(firebaseApp);
+export async function registerViewer(uid) {
+  if (!uid) throw Error('Увійдіть до акаунта.');
+  await setDoc(doc(db,'viewerAccess',uid),{role:'viewer'});
+}
+export function watchViewerAccess(user,next) {
+  if (!user || user.isAnonymous || !user.emailVerified) {next(false);return()=>{};}
+  return onSnapshot(doc(db,'viewerAccess',user.uid),snap=>next(snap.exists()&&snap.data().role==='viewer'),()=>next(false));
+}
+// Both sides of the binding are checked; a stale membership never grants access.
+export function watchTeamAccess(user, next) {
+  let stopped=false, stopBinding=null, generation=0;
+  if (!user || user.isAnonymous || (!user.emailVerified && !isOwner(user))) { next(false,null);return()=>{}; }
+  const stop=onSnapshot(doc(db,'teamAccess',user.uid),snap=>{
+    if(stopped)return;
+    const ticket=++generation;stopBinding?.();stopBinding=null;next(false,null);
+    const id=snap.exists()?snap.data().employeeId:null;
+    if (!id || typeof id!=='string' || id.includes('/')) return;
+    stopBinding=onSnapshot(doc(db,'employeeAccess',id),binding=>{
+      if(!stopped && ticket===generation) next(binding.exists() && binding.data().uid===user.uid,id);
+    },()=>{if(!stopped && ticket===generation)next(false,null);});
+  },()=>{generation++;stopBinding?.();if(!stopped)next(false,null);});
+  return()=>{stopped=true;generation++;stop();stopBinding?.();};
+}
+// Existing bindings were already approved by admins; build the lookup for them.
+export async function syncTeamAccess() {
+  const snapshot=await getDocs(collection(db,'employeeAccess'));
+  for(const binding of snapshot.docs) {
+    const uid=binding.data().uid;
+    if(typeof uid==='string' && uid && uid.length<=128 && !uid.includes('/'))
+      await setDoc(doc(db,'teamAccess',uid),{employeeId:binding.id});
+  }
+}
