@@ -80,6 +80,17 @@ service cloud.firestore {
             && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80));
       allow delete: if false;
     }
+    // Isolated fryer-maintenance records. Never stored in schedules/{month}.
+    match /fryerMaintenance/{month} {
+      allow read: if canReadSchedule();
+      allow create, update: if isAdmin()
+        && month.matches('20[0-9][0-9]-(0[1-9]|1[0-2])')
+        && request.resource.data.keys().hasOnly(['days', 'updatedAt'])
+        && request.resource.data.days is map
+        && request.resource.data.days.size() <= 31
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isOwner();
+    }
     match /schedules/{month} {
       allow read: if canReadSchedule();
       allow write: if isAdmin();
