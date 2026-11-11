@@ -1,6 +1,6 @@
 import {initPush, setPushAccess, disconnectPush, notifySchedule} from './push.js?v=20261111.fryer2';
 import { initUserDirectory, refreshOwnerUserDirectory, watchMyApproval } from './user-directory.js?v=20261031.presence';
-import { watchTeamAccess, watchViewerAccess, syncTeamAccess } from './access.js?v=20261019.8';
+import { watchTeamAccess, watchViewerAccess } from './access.js?v=20261019.8';
 import { initOwnerPanel } from './owner.js?v=20261019.8';
 import { initAccount, openAccount, setScheduleAccess } from './account.js?v=20261031.presence';
 import { isOwner, isPrimaryOwner, currentUser, canEditWorker, ensureWorkerSession, isAdmin, login, logout, watchAuth } from './auth.js?v=20261019.8';
@@ -101,12 +101,14 @@ function installOwnerSelfBinding() {
   const panel=$('owner-panel');
   if (!panel || $('owner-self-binding')) return;
   const section=document.createElement('section');section.id='owner-self-binding';
-  section.innerHTML='<h3>Моє ім’я в графіку</h3><p>Оберіть своє ім’я серед уже доданих працівників.</p><select id="owner-self-select" aria-label="Моє ім’я в графіку"></select><button id="owner-self-save" type="button">Прив’язати моє ім’я</button><p id="owner-self-status" role="status"></p>';
+  section.innerHTML='<h3>Моє ім’я в графіку</h3><p>Прив’язка діє лише для акаунта, в який ви зараз увійшли. Переконайтесь, що вибираєте СВОЄ ім’я, а не іншого власника.</p><p id="owner-self-identity"></p><select id="owner-self-select" aria-label="Моє ім’я в графіку"></select><button id="owner-self-save" type="button">Прив’язати моє ім’я</button><p id="owner-self-status" role="status"></p>';
   panel.insertBefore(section,$('owner-requests'));
   $('owner-self-save').addEventListener('click',action(async()=>{
     if (!isOwner(currentUser())) return;
     const id=$('owner-self-select').value;
     if (!employees.some(e=>String(e.id)===id)) throw new Error('Оберіть ім’я.');
+    const selectedName=employees.find(e=>String(e.id)===String(id))?.name||String(id);
+    if(!confirm('Прив’язати ім’я «'+selectedName+'» саме до акаунта '+(currentUser().email||currentUser().uid)+'?'))return;
     await bindOwnerEmployee(employees.map(e=>e.id),id,currentUser().uid);
     boundEmployeeId=id;
     $('owner-self-status').textContent='Ваш акаунт прив’язано до обраного імені.';
@@ -115,6 +117,8 @@ function installOwnerSelfBinding() {
 function renderOwnerSelfBinding() {
   const section=$('owner-self-binding');if(!section)return;
   section.hidden=!isOwner(currentUser());
+  const identity=$('owner-self-identity');
+  if(identity)identity.textContent=currentUser() ? 'Поточний акаунт: '+(currentUser().email||'без email')+' · UID '+currentUser().uid : '';
   const select=$('owner-self-select'),value=boundEmployeeId || select.value;
   select.replaceChildren(new Option('Оберіть ім’я',''));
   for(const e of employees)select.add(new Option(e.name,String(e.id)));
@@ -256,7 +260,7 @@ window.executeRedDot = action(async () => {
   if (!pendingAction) return;
   if (!canEditWorker()) throw new Error('Увійдіть і підтвердьте пошту.');
   const { month, id, day, unavailable } = pendingAction;
-  if (!isAdmin(currentUser()) && (!boundEmployeeId || String(id) !== String(boundEmployeeId))) throw new Error('Можна позначати вихідні лише у своєму рядку.');
+  if (!boundEmployeeId || String(id) !== String(boundEmployeeId)) throw new Error('Червоні крапки через особистий графік можна ставити лише у власному рядку.');
   await setAvailability(month,id,day,unavailable);
   window.cancelRedDot(); toast('Вихідний збережено.');
 });
@@ -527,7 +531,7 @@ if (admin) {
   });
   $('logout').addEventListener('click',()=>{window.location.assign(new URL('index.html',location.href).href);});
   let lastAdminSession=null;
-  watchAuth(user=>{const nextAllowed=isAdmin(user),sessionKey=`${user?.uid||'guest'}:${nextAllowed}`;if(lastAdminSession===sessionKey)return;lastAdminSession=sessionKey;const authLoading=$('admin-auth-loading');if(authLoading)authLoading.hidden=true;renderRoleBadge(user);allowed=nextAllowed;setPushAccess(allowed);unsubscribe?.();generation++;closeAll();employees=[];banquets={};ready=false;$('admin-panel').hidden=!allowed;$('login-panel').hidden=allowed;if(!allowed)clearPrivateContent();if(allowed){loadData();syncTeamAccess().catch(()=>toast('Для доступу працівників опублікуйте нові Rules та перезавантажте адмінку.','error'));}});
+  watchAuth(user=>{const nextAllowed=isAdmin(user),sessionKey=`${user?.uid||'guest'}:${nextAllowed}`;if(lastAdminSession===sessionKey)return;lastAdminSession=sessionKey;const authLoading=$('admin-auth-loading');if(authLoading)authLoading.hidden=true;renderRoleBadge(user);allowed=nextAllowed;setPushAccess(allowed);unsubscribe?.();generation++;closeAll();employees=[];banquets={};ready=false;$('admin-panel').hidden=!allowed;$('login-panel').hidden=allowed;if(!allowed)clearPrivateContent();if(allowed)loadData();});
 } else {
   initAccount();
   $('copy-access').addEventListener('click',async()=>{
