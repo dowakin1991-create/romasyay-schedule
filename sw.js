@@ -6,6 +6,23 @@ self.addEventListener('push', event => {
   event.waitUntil((async()=>{
     let data;
     try { data=event.data?.json(); } catch {}
+    if(data?.category==='fryer'){
+      const month=typeof data.month==='string'&&/^20\d\d-(0[1-9]|1[0-2])$/.test(data.month)?data.month:null;
+      const notice=data.notice;
+      const names={cleaned:'Фритюр прибрано',oil:'Олію у фритюрі замінено',both:'Прибирання та заміна олії',updated:'Графік фритюра змінено',removed:'Позначки фритюра скасовано'};
+      if(!month||!notice||!Object.hasOwn(names,notice.kind)||!Number.isInteger(notice.day)||
+         notice.day<1||notice.day>new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate())return;
+      const date=String(notice.day).padStart(2,'0')+'.'+month.slice(5,7)+'.'+month.slice(0,4);
+      const url=new URL('index.html',self.registration.scope);
+      url.searchParams.set('section','fryer');
+      url.searchParams.set('month',month);
+      return self.registration.showNotification('РОМАСЯЙ · ФРИТЮР',{
+        body:names[notice.kind]+' — '+date+'. Відкрийте календар фритюра.',
+        icon:new URL('assets/romasyay-icon.svg',self.registration.scope).href,
+        tag:'romasyay-fryer-'+month+'-'+notice.day+'-'+Date.now(),
+        data:{target:url.href}
+      });
+    }
     if(data?.accountEvent==='registered'||data?.accountEvent==='approved'){
       const registered=data.accountEvent==='registered';
       const title=registered?'Новий користувач РОМАСЯЙ ГРАФІК':'Акаунт підтверджено';
@@ -39,7 +56,7 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   const rawTarget=event.notification.data?.target;
   let target=new URL('index.html',self.registration.scope).href;
-  if(typeof rawTarget==='string')try{const candidate=new URL(rawTarget,self.registration.scope);if(candidate.origin===self.location.origin&&candidate.pathname.startsWith(new URL(self.registration.scope).pathname)&&(candidate.searchParams.has('month')&&candidate.searchParams.has('day')||['/index.html','/admin.html'].some(p=>candidate.pathname.endsWith(p))))target=candidate.href;}catch{}
+  if(typeof rawTarget==='string')try{const candidate=new URL(rawTarget,self.registration.scope);if(candidate.origin===self.location.origin&&candidate.pathname.startsWith(new URL(self.registration.scope).pathname)&&(candidate.searchParams.has('month')&&candidate.searchParams.has('day')||candidate.searchParams.get('section')==='fryer'||['/index.html','/admin.html'].some(p=>candidate.pathname.endsWith(p))))target=candidate.href;}catch{}
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
     for (const client of windows) {
