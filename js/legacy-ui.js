@@ -61,8 +61,18 @@ function focusNotificationDay(day,endDay=day,days=null) {
   clearTimeout(notificationFocusTimer);
   notificationFocusTimer=setTimeout(()=>nodes.forEach(node=>node.classList.remove('notification-focus')),4200);
 }
-window.showScheduleView=()=>{if($('schedule-view'))$('schedule-view').hidden=false;if($('personal-view'))$('personal-view').hidden=true;$('schedule-tab')?.setAttribute('aria-pressed','true');$('personal-tab')?.setAttribute('aria-pressed','false');};
-window.showPersonalView=()=>{if($('schedule-view'))$('schedule-view').hidden=true;if($('personal-view'))$('personal-view').hidden=false;$('schedule-tab')?.setAttribute('aria-pressed','false');$('personal-tab')?.setAttribute('aria-pressed','true');renderPersonalDashboard();};
+window.romasyayCurrentMonth=()=>getDocId();
+function switchWorkerTab(tab){
+  for(const name of ['schedule','fryer','personal']){
+    const view=$(name+'-view'),button=$(name+'-tab');
+    if(view)view.hidden=name!==tab;
+    button?.setAttribute('aria-pressed',String(name===tab));
+  }
+  if(tab==='personal')renderPersonalDashboard();
+}
+window.showScheduleView=()=>switchWorkerTab('schedule');
+window.showFryerView=()=>switchWorkerTab('fryer');
+window.showPersonalView=()=>switchWorkerTab('personal');
 function renderPersonalDashboard(){
   $('month-label-profile').textContent=`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
   const employee=employees.find(item=>String(item.id)===String(boundEmployeeId));
@@ -209,6 +219,7 @@ window.changeMonth = dir => {
   currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
   activeColDay = null; activeRowEmpId = null; initialScrollDone = false;
   document.querySelector('.table-wrapper').scrollLeft = 0;
+  window.dispatchEvent(new Event('romasyay:month-change'));
   loadData();
 };
 window.closeModal = id => { hide(id); if (id === 'daySettingsModal') currentSettingsDay = null; if (id === 'receiptModal') currentReceiptDay = null; };
@@ -550,6 +561,8 @@ if (admin) {
       $('redDotToggleBtn').className='mode-btn off';
       $('redDotToggleBtn').textContent='🔴 Поставити вихідний';
       $('private-schedule').hidden=!access;
+      window.dispatchEvent(new CustomEvent('romasyay:access-change',{detail:{allowed:access}}));
+      if(!access)window.showScheduleView();
       $('viewer-export').hidden=!access || !viewerMode;
       $('redDotToggleBtn').hidden=viewerMode;
       $('personal-tab').hidden=viewerMode;
@@ -593,7 +606,6 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             const isToday = (year === todayDate.getFullYear() && month === todayDate.getMonth() && i === todayDate.getDate());
             const dayEvent = banquets[i]?.active ? banquets[i] : null;
             const isBanquet = !!dayEvent;
-            const duty = getDutyName(year, month, i);
             
             let thClass = isWeekend ? 'weekend' : '';
             if (isToday) thClass += ' current-day-th';
@@ -606,7 +618,6 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             headHtml += `<th data-day="${i}" class="${thClass}" style="line-height: 1.1; min-width: 50px; cursor: pointer;" onclick="handleHeaderClick(${i})">
                 <span class="day-number">${i}</span><br>
                 <span style="font-size: 0.65rem; font-weight: normal; opacity: 0.85;">${dayNames[dayIndex]}</span>
-                <span class="duty-text" style="${isBanquet ? 'color: white;' : ''}">${duty}</span>
                 ${banquetLabel}
             </th>`;
         }
@@ -673,7 +684,6 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
             const isToday = (year === todayDate.getFullYear() && month === todayDate.getMonth() && i === todayDate.getDate());
             const dayEvent = banquets[i]?.active ? banquets[i] : null;
             const isBanquet = !!dayEvent;
-            const duty = getDutyName(year, month, i);
             
             let thClass = isWeekend ? 'weekend' : '';
             if (isToday) thClass += ' current-day-th';
@@ -686,7 +696,6 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();}
         headHtml += `<th data-day="${i}" class="${thClass}" style="line-height: 1.1; min-width: 50px; cursor: pointer;" onclick="openDaySettings(${i})">
                 <span class="day-number">${i}</span><br>
                 <span style="font-size: 0.65rem; font-weight: normal; opacity: 0.85;">${dayNames[dayIndex]}</span>
-                <span class="duty-text" style="${isBanquet ? 'color: white;' : ''}">${duty}</span>
                 ${banquetLabel}
             </th>`;
         }
