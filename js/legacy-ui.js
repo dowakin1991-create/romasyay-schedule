@@ -3,7 +3,7 @@ import { initUserDirectory, refreshOwnerUserDirectory, watchMyApproval } from '.
 import { watchTeamAccess, watchViewerAccess, syncTeamAccess } from './access.js?v=20261019.8';
 import { initOwnerPanel } from './owner.js?v=20261019.8';
 import { initAccount, openAccount, setScheduleAccess } from './account.js?v=20261031.presence';
-import { isOwner, currentUser, canEditWorker, ensureWorkerSession, isAdmin, login, logout, watchAuth } from './auth.js?v=20261019.8';
+import { isOwner, isPrimaryOwner, currentUser, canEditWorker, ensureWorkerSession, isAdmin, login, logout, watchAuth } from './auth.js?v=20261019.8';
 import { ensureMonthRoster, moveEmployee, subscribeSchedule, monthId, updateSchedule, setAvailability, employeeAccess, bindEmployee, bindOwnerEmployee, addReceipt, deleteReceipt, removeBanquet, readReceipt } from './store.js?v=20261110.supra';
 import { dutyName as getDutyName, shiftCount, toast } from './ui.js?v=20261015.2';
 import { withBusy, recordChange, changeJournal, clearChangeJournal } from './session.js?v=20261017.4';
@@ -12,7 +12,7 @@ import { exportHalfMonth as exportPNG } from './export.js?v=20261110.supra';
 
 function renderRoleBadge(user) {
   const badge = document.getElementById('role-badge');
-  const label = isOwner(user) ? 'Власник' : isAdmin(user) ? 'Шеф' : '';
+  const label = isPrimaryOwner(user) ? 'Головний власник' : isOwner(user) ? 'Технічний власник' : isAdmin(user) ? 'Шеф' : '';
   badge.textContent = label;
   badge.hidden = !label;
   badge.dataset.role = isOwner(user) ? 'owner' : 'admin';
